@@ -1,0 +1,7 @@
+config.py
+secrets.py
+*.env
+uni_monitor_data/
+*.log
+__pycache__/
+*.pyc
