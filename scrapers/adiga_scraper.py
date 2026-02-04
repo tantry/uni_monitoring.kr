@@ -13,9 +13,18 @@ import re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scraper_base import BaseScraper
+from .scraper_base import BaseScraper
 from sources import get_music_types, get_music_icons, get_music_names
-from filters import should_keep_program, get_region_for_university, MUSIC_KEYWORDS, ADMISSION_KEYWORDS
+from filters import should_keep_program, get_region_for_university, ADMISSION_KEYWORDS
+
+# ===== ADD THIS DICTIONARY =====
+DEPARTMENT_KEYWORDS = {
+    'music': ['음악', '음악학과', '음악대학', '음악전공', '음악계열', '실용음악', '성악', '작곡'],
+    'korean': ['한국어', '국어', '국어국문', '국문학', '한문', '한국언어', '언어문학'],
+    'english': ['영어', '영어영문', '영문학', '영미어문', '영어교육', '영어학과'],
+    'liberal': ['인문', '인문학', '교양', '교양교육', '기초교양', '자유학기', '자유전공']
+}
+# ===== END =====
 
 class AdigaScraper(BaseScraper):
     """Adiga scraper - Shows filtering debug"""
@@ -91,12 +100,14 @@ class AdigaScraper(BaseScraper):
                     # DEBUG: Show what keywords are found
                     title_lower = title.lower()
                     
-                    # Check music keywords
-                    music_found = []
-                    for category, keywords in MUSIC_KEYWORDS.items():
-                        for keyword in keywords:
-                            if keyword in title_lower:
-                                music_found.append(f"{category}:{keyword}")
+		# Check department keywords
+		dept_found = []
+		for dept, keywords in DEPARTMENT_KEYWORDS.items():
+    		for keyword in keywords:
+        	if keyword in title_lower:
+            dept_found.append(f"{dept}:{keyword}")
+            break  # Found at least one keyword for this department
+
                     
                     # Check admission keywords  
                     admission_found = []
@@ -123,7 +134,7 @@ class AdigaScraper(BaseScraper):
                         if program:
                             programs.append(program)
                             print(f"   ✓ KEPT: {title[:50]}...")
-                            print(f"     Music keywords: {music_found}")
+			print(f"     Department keywords: {dept_found}")
                             print(f"     Admission keywords: {admission_found}")
                     else:
                         filtered_count += 1

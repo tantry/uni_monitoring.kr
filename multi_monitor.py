@@ -23,7 +23,7 @@ from telegram_formatter import TelegramFormatter
 
 # Import Telegram config
 try:
-    from config import BOT_TOKEN, CHANNEL_ID
+    from config import BOT_TOKEN, CHAT_ID
     HAS_TELEGRAM_CONFIG = True
 except ImportError:
     HAS_TELEGRAM_CONFIG = False

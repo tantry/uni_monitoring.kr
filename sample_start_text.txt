@@ -2,6 +2,20 @@ Working on University Admission Monitor system.
 
 GitHub: https://github.com/tantry/uni_monitoring.kr
 
-Current Status: System working, sending Telegram alerts for admissions articles.
+start by examining the README.md
+please give me solutions step by step... only one step, then we test, waait for fix confirm then proceed
+when giving commands, a script section must not contain descriptions but only the console commands. descriptons for me to understand what we are doing should be outside the script (copy) window
+Current Status: Telegram alerts not going through
+Most Likely Issues:
 
-Next Task: [Whatever you want to work on next]
+    config.py has wrong variable names (should be CHAT_ID not CHANNEL_ID)
+
+    No real BOT_TOKEN/CHAT_ID set yet
+
+    Test programs filtered as duplicates
+so you wrote fix_telegram.py --
+this was the readout:multi_monitor.py expects: CHAT_ID
+multi_monitor.py expects: CHANNEL_ID
+config.py has: CHANNEL_ID
+config.py has: BOT_TOKEN
+

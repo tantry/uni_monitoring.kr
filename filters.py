@@ -195,42 +195,53 @@ def analyze_title(title):
         result['urgency_level'] = calculate_urgency(result['deadline'])
     
     return result
-
-def should_keep_program(title, university=None):
-    """Main filter function"""
-    analysis = analyze_title(title)
+def should_keep_program(title, content=""):
+    """
+    Filter programs to keep admission announcements for multiple departments
+    Returns: (should_keep, reason, keywords_found, department)
+    """
+    title_lower = title.lower()
+    content_lower = content.lower() if content else ""
+    full_text = title_lower + " " + content_lower
     
-    # Must be music-related
-    if not analysis['is_music']:
-        return False, "Not music-related", analysis
+    # Check for admission keywords first
+    admission_keywords_found = []
+    for keyword in ADMISSION_KEYWORDS:
+        if keyword in full_text:
+            admission_keywords_found.append(keyword)
     
-    # Must be admission-related
-    if not analysis['is_admission']:
-        return False, "Not admission-related", analysis
+    if not admission_keywords_found:
+        return False, "No admission keywords found", [], None
     
-    # Check university
-    target_univ = university or analysis['university']
-    if not target_univ:
-        return False, "No university identified", analysis
+    # Define all department keywords
+    DEPARTMENT_KEYWORDS = {
+        'music': ['음악', 'music', '실기', '예술', '예체능', '피아노', '바이올린', '성악', '작곡'],
+        'korean': ['한국어', '국어', 'korean', '한문', '국문', '언어', '문학'],
+        'english': ['영어', 'english', '영문', '영미', '어학', '번역'],
+        'liberal': ['자유', 'liberal', '인문', '교양', '인문학', '리버럴', '기초', '교과']
+    }
     
-    if target_univ not in TARGET_UNIVERSITIES:
-        return False, f"University not in target list: {target_univ}", analysis
+    # Check which department(s) the program belongs to
+    departments_found = []
+    department_keywords_found = []
     
-    # Check deadline
-    deadline = analysis.get('deadline')
-    if deadline:
-        try:
-            year = int(deadline.split('.')[0])
-            current_year = datetime.now().year
-            
-            if year < current_year - 1:
-                return False, f"Deadline too far in past: {deadline}", analysis
-            if year > current_year + 1:
-                return False, f"Deadline too far in future: {deadline}", analysis
-        except:
-            pass
+    for dept, keywords in DEPARTMENT_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in full_text:
+                departments_found.append(dept)
+                department_keywords_found.append(f"{dept}:{keyword}")
+                break  # Found at least one keyword for this department
     
-    return True, "Passes all filters", analysis
+    if not departments_found:
+        return False, "Not related to target departments", admission_keywords_found, None
+    
+    # Combine all keywords found
+    all_keywords = department_keywords_found + admission_keywords_found
+    
+    # Determine primary department (take first found)
+    primary_department = departments_found[0]
+    
+    return True, f"{primary_department.upper()} admission program found", all_keywords, primary_department
 
 def get_region_for_university(university):
     """Get region for a university"""
