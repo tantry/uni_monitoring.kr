@@ -293,26 +293,7 @@ This system is actively maintained. When starting new development sessions:
 **System Status**: ✅ Operational (Adiga working, test data flow verified)  
 **Next Priority**: Add Jinhaksa scraper after URL discovery
 ```
-
-**END OF FILE - STOP COPYING HERE**
-
-## **After pasting into nano:**
-
-1. **Save**: `Ctrl+X` → `Y` → `Enter`
-2. **Verify**:
-   ```bash
-   cd /path/to/uni_monitoring.kr
-   wc -l README.md  # Should be ~250+ lines
-   head -10 README.md  # Should show title
-   ```
-3. **Push to GitHub**:
-   ```bash
-   git add README.md
-   git commit -m "Add comprehensive README with documentation"
-   git push origin main
-   ```
-
-**Yes, copy everything from `# University Admission Monitor System` to the end, paste into nano, save.** That's exactly right!
+   
 
 **Last Updated**: 2026-02-04  
 **System Status**: ✅ Operational  
