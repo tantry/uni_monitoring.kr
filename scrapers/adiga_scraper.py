@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Adiga (어디가) scraper - DEBUG FILTERING VERSION
-Shows why articles are being filtered out
+Adiga (어디가) scraper - MULTI-DEPARTMENT FILTERING VERSION
+Shows why articles are being filtered out for all target departments
 """
 import requests
 from bs4 import BeautifulSoup
@@ -17,17 +17,18 @@ from .scraper_base import BaseScraper
 from sources import get_music_types, get_music_icons, get_music_names
 from filters import should_keep_program, get_region_for_university, ADMISSION_KEYWORDS
 
-# ===== ADD THIS DICTIONARY =====
+# ===== DEPARTMENT KEYWORDS =====
 DEPARTMENT_KEYWORDS = {
-    'music': ['음악', '음악학과', '음악대학', '음악전공', '음악계열', '실용음악', '성악', '작곡'],
-    'korean': ['한국어', '국어', '국어국문', '국문학', '한문', '한국언어', '언어문학'],
-    'english': ['영어', '영어영문', '영문학', '영미어문', '영어교육', '영어학과'],
-    'liberal': ['인문', '인문학', '교양', '교양교육', '기초교양', '자유학기', '자유전공']
+    'music': ['음악', '음악학과', '음악대학', '음악전공', '음악계열', '실용음악', '성악', '작곡', '피아노', '바이올린'],
+    'korean': ['한국어', '국어', '국어국문', '국문학', '한문', '한국언어', '언어문학', '국어교육'],
+    'english': ['영어', '영어영문', '영문학', '영미어문', '영어교육', '영어학과', '영어전공'],
+    'liberal': ['인문', '인문학', '교양', '교양교육', '기초교양', '자유학기', '자유전공', '기초과목']
 }
-# ===== END =====
+
+ADMISSION_KEYWORDS = ADMISSION_KEYWORDS  # Already imported from filters
 
 class AdigaScraper(BaseScraper):
-    """Adiga scraper - Shows filtering debug"""
+    """Adiga scraper - Shows filtering debug for multiple departments"""
     
     AJAX_URL = "https://www.adiga.kr/uct/nmg/enw/newsAjax.do"
     REFERER_URL = "https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"
@@ -43,14 +44,14 @@ class AdigaScraper(BaseScraper):
         real_programs = self._scrape_with_debug()
         
         if real_programs:
-            print(f"\n✅ Found {len(real_programs)} REAL music admission programs!")
+            print(f"\n✅ Found {len(real_programs)} department admission programs!")
             return real_programs
         else:
-            print(f"\n⚠️ No music admission programs found, using test data")
+            print(f"\n⚠ No department admission programs found, using test data")
             return self._create_test_programs()
     
     def _scrape_with_debug(self):
-        """Scrape with detailed debug output"""
+        """Scrape with detailed debug output for all departments"""
         try:
             if not self.session:
                 self.session = requests.Session()
@@ -88,8 +89,9 @@ class AdigaScraper(BaseScraper):
             
             programs = []
             filtered_count = 0
+            kept_count = 0
             
-            for i, item in enumerate(list_items[:20], 1):  # Check first 20
+            for i, item in enumerate(list_items[:30], 1):  # Check first 30
                 try:
                     title_elem = item.find('p', class_='uctCastTitle')
                     if not title_elem:
@@ -97,187 +99,174 @@ class AdigaScraper(BaseScraper):
                     
                     title = title_elem.get_text(strip=True)
                     
-                    # DEBUG: Show what keywords are found
+                    # DEBUG: Check keywords
                     title_lower = title.lower()
                     
-		# Check department keywords
-		dept_found = []
-		for dept, keywords in DEPARTMENT_KEYWORDS.items():
-    		for keyword in keywords:
-        	if keyword in title_lower:
-            dept_found.append(f"{dept}:{keyword}")
-            break  # Found at least one keyword for this department
-
-                    
-                    # Check admission keywords  
+                    # Check admission keywords
                     admission_found = []
                     for keyword in ADMISSION_KEYWORDS:
                         if keyword in title_lower:
                             admission_found.append(keyword)
                     
-                    # Apply filter
-                    should_keep, reason, analysis = should_keep_program(title)
+                    # Check department keywords
+                    dept_found = []
+                    departments_found = []
+                    for dept, keywords in DEPARTMENT_KEYWORDS.items():
+                        for keyword in keywords:
+                            if keyword in title_lower:
+                                dept_found.append(f"{dept}:{keyword}")
+                                if dept not in departments_found:
+                                    departments_found.append(dept)
+                                break  # Found at least one keyword for this department
+                    
+                    # Use the filter module's should_keep_program for final decision
+                    should_keep, reason, keywords, department = should_keep_program(title)
                     
                     if should_keep:
-                        link = self._extract_link(item)
-                        
+                        kept_count += 1
                         program_data = {
                             'title': title,
-                            'university': analysis.get('university', ''),
-                            'department': analysis.get('department', '음악관련학과'),
-                            'deadline': analysis.get('deadline', ''),
-                            'url': link,
-                            'analysis': analysis,
+                            'link': self._extract_link(item),
+                            'date': self._extract_date(item),
+                            'department': department if department else (departments_found[0] if departments_found else 'general'),
+                            'keywords': keywords,
+                            'source': self.source_name,
+                            'source_name': self.source_config.get('name', 'Adiga')
                         }
                         
                         program = self.normalize_program_data(program_data)
                         if program:
                             programs.append(program)
-                            print(f"   ✓ KEPT: {title[:50]}...")
-			print(f"     Department keywords: {dept_found}")
-                            print(f"     Admission keywords: {admission_found}")
+                            print(f"   ✓ KEPT [{kept_count}]: {title[:50]}...")
+                            print(f"     Department: {program_data['department']}")
+                            print(f"     Keywords: {', '.join(keywords[:3])}...")
                     else:
                         filtered_count += 1
-                        # Show why filtered (for first few)
-                        if filtered_count <= 5:
-                            print(f"   ✗ FILTERED [{i}]: {title[:50]}...")
-                            print(f"     Reason: {reason}")
-                            if music_found:
-                                print(f"     Music keywords found: {music_found}")
-                            if admission_found:
-                                print(f"     Admission keywords found: {admission_found}")
-                            
+                        print(f"   ✗ FILTERED [{i}]: {title[:50]}...")
+                        print(f"     Reason: {reason}")
+                        if admission_found:
+                            print(f"     Admission keywords: {admission_found}")
+                        if dept_found:
+                            print(f"     Department keywords: {dept_found}")
+                        
                 except Exception as e:
+                    print(f"   ⚠ Error processing item {i}: {e}")
                     continue
             
             print(f"\n   📊 Filtering summary:")
-            print(f"   Total articles: {len(list_items)}")
-            print(f"   Kept: {len(programs)}")
+            print(f"   Total articles: {len(list_items[:30])}")
+            print(f"   Kept: {kept_count}")
             print(f"   Filtered out: {filtered_count}")
             
             return programs
             
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            print(f"   ⚠ Scraping error: {e}")
             return []
     
     def _extract_link(self, item):
         """Extract article link"""
-        try:
-            link_elem = item.find('a', onclick=True)
-            if link_elem:
-                onclick = link_elem.get('onclick', '')
-                match = re.search(r'fnDetailPopup\("(\d+)"\)', onclick)
-                if match:
-                    return f"{self.REFERER_URL}&nttId={match.group(1)}"
-        except:
-            pass
-        
-        return self.REFERER_URL
+        link_elem = item.find('a')
+        if link_elem and link_elem.get('href'):
+            href = link_elem.get('href')
+            if href.startswith('/'):
+                return f"https://www.adiga.kr{href}"
+            return href
+        return ""
+    
+    def _extract_date(self, item):
+        """Extract article date"""
+        date_elem = item.find('span', class_='date')
+        if date_elem:
+            return date_elem.get_text(strip=True)
+        return datetime.now().strftime('%Y-%m-%d')
     
     def _create_test_programs(self):
-        """Test programs"""
+        """Create test programs for debugging"""
+        test_programs = []
+        
         test_data = [
             {
-                'title': '홍익대학교 실용음악학과 재즈보컬 추가모집 (~2026.03.15)',
-                'university': '홍익대학교',
-                'department': '실용음악학과',
-                'deadline': '2026.03.15',
-                'url': 'https://www.adiga.kr/example1',
+                'title': '[테스트] 서울대학교 음악학과 추가모집 공고',
+                'link': 'https://example.com/test1',
+                'date': '2024-12-20',
+                'department': 'music',
+                'keywords': ['music:음악', 'admission:추가모집'],
+                'source': self.source_name,
+                'source_name': self.source_config.get('name', 'Adiga')
             },
+            {
+                'title': '[테스트] 한양대학교 영어영문학과 모집안내',
+                'link': 'https://example.com/test2',
+                'date': '2024-12-25',
+                'department': 'english',
+                'keywords': ['english:영어', 'admission:모집'],
+                'source': self.source_name,
+                'source_name': self.source_config.get('name', 'Adiga')
+            }
         ]
         
-        programs = []
-        for test in test_data:
-            program = self.normalize_program_data(test)
+        for data in test_data:
+            program = self.normalize_program_data(data)
             if program:
-                programs.append(program)
+                test_programs.append(program)
         
-        return programs
+        print(f"   ✅ Created {len(test_programs)} test programs")
+        return test_programs
     
     def normalize_program_data(self, raw_data):
-        """Convert to standardized format"""
-        title = raw_data.get('title', '')
-        university = raw_data.get('university', 'Unknown')
-        department = raw_data.get('department', '음악관련학과')
-        deadline = raw_data.get('deadline', '')
-        url = raw_data.get('url', '')
+        """Normalize program data structure"""
+        if not raw_data or 'title' not in raw_data:
+            return None
         
-        music_types = get_music_types(title)
-        region = get_region_for_university(university)
+        # Generate unique ID
+        unique_string = f"{raw_data['title']}_{raw_data.get('link', '')}_{raw_data.get('date', '')}"
+        program_id = hashlib.md5(unique_string.encode()).hexdigest()[:8]
         
-        id_string = f"{university}_{title}_{deadline}"
-        program_id = hashlib.md5(id_string.encode()).hexdigest()[:8]
-        
-        # Calculate days
-        deadline_days = None
-        if deadline:
-            try:
-                if '.' in deadline:
-                    parts = deadline.split('.')
-                    if len(parts) == 3:
-                        year, month, day = map(int, parts)
-                        deadline_date = datetime(year, month, day)
-                        today = datetime.now()
-                        deadline_days = max(0, (deadline_date - today).days)
-            except:
-                pass
-        
-        # Urgency
-        urgency = 'normal'
-        if deadline_days is not None:
-            if deadline_days <= 3:
-                urgency = 'high'
-            elif deadline_days <= 7:
-                urgency = 'medium'
-            elif deadline_days <= 14:
-                urgency = 'low'
-        
-        # Build program
-        program = {
-            'id': f"adiga_{program_id}",
-            'source': 'adiga',
-            'university': university,
-            'department': department,
-            'program': title,
-            'deadline': deadline,
-            'deadline_days': deadline_days,
-            'url': url,
-            'music_types': music_types,
-            'music_icons': get_music_icons(music_types),
-            'music_names': get_music_names(music_types),
-            'location': region,
-            'urgency': urgency,
-            'is_national': any(keyword in university for keyword in ['국립대', '서울대', '부산대']),
-            'scraped_at': datetime.now().isoformat(),
-            'description': title[:80] + "..." if len(title) > 80 else title,
+        normalized = {
+            'id': program_id,
+            'title': raw_data['title'],
+            'link': raw_data.get('link', ''),
+            'date': raw_data.get('date', ''),
+            'university': self._extract_university(raw_data['title']),
+            'department': raw_data.get('department', ''),
+            'keywords': raw_data.get('keywords', []),
+            'source': raw_data.get('source', self.source_name),
+            'source_name': raw_data.get('source_name', ''),
+            'detected_at': datetime.now().isoformat()
         }
         
-        return program
+        return normalized
+    
+    def _extract_university(self, title):
+        """Extract university name from title"""
+        # Simple extraction - can be enhanced
+        university_keywords = ['서울대', '한양대', '홍익대', '경희대', '성균관대', '고려대', '연세대']
+        for uni in university_keywords:
+            if uni in title:
+                return f"{uni}학교"
+        return ""
+
 
 def test_adiga_scraper():
-    """Test with debug"""
-    from sources import SOURCE_CONFIG
-    
-    print("🧪 Adiga Scraper - FILTER DEBUG MODE")
+    """Test the Adiga scraper"""
+    print("🧪 Testing Adiga Scraper")
     print("=" * 60)
+    
+    from sources import SOURCE_CONFIG
     
     scraper = AdigaScraper('adiga', SOURCE_CONFIG['adigo'])
     programs = scraper.scrape()
     
-    if programs:
-        print(f"\n🎯 FINAL RESULT: {len(programs)} music admission programs")
-        for i, program in enumerate(programs, 1):
-            print(f"\n{i}. {program['university']}")
-            print(f"   {program['music_icons']} {program['music_names']}")
-            print(f"   {program['program'][:60]}...")
-            if program['deadline']:
-                print(f"   마감: {program['deadline']} ({program['deadline_days']}일 후)")
-            print(f"   URL: {program['url'][:50]}...")
-    else:
-        print("\n❌ No music admission programs found in Adiga")
+    print(f"\n📊 Total programs found: {len(programs)}")
+    for i, program in enumerate(programs, 1):
+        print(f"{i}. {program['title'][:50]}...")
+        print(f"   Dept: {program.get('department', 'N/A')}")
+        print(f"   Uni: {program.get('university', 'N/A')}")
     
-    return programs
+    print("=" * 60)
+    print("✅ Test complete")
+
 
 if __name__ == "__main__":
     test_adiga_scraper()
