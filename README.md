@@ -5,7 +5,7 @@ A Python-based monitoring system that scrapes Korean university admission announ
 
 ## ✨ Features
 
-- **Multi-Source Monitoring**: Scrapes admission announcements from various Korean education portals
+- **Multi-Source Monitoring**: Scrapes admission announcements from Korean education portals
 - **Multi-Department Tracking**: Monitors announcements for:
   - **Music Departments** (음악, 실용음악, 성악, 작곡)
   - **Korean Departments** (한국어, 국어국문, 국문학)
@@ -14,7 +14,7 @@ A Python-based monitoring system that scrapes Korean university admission announ
 - **Real-time Alerts**: Sends Telegram notifications for new admission announcements
 - **Intelligent Filtering**: Filters out irrelevant content using keyword matching
 - **Duplicate Detection**: Prevents duplicate alerts using content hashing
-- **Multi-Scraper Architecture**: Easily extensible with new data sources
+- **Modular Architecture**: Easily extensible with new data sources
 
 ## 📋 Prerequisites
 
@@ -67,16 +67,19 @@ For periodic monitoring, use the included script:
 
 ```
 uni_monitoring.kr/
-├── multi_monitor.py          # Main monitoring script
-├── config.py                # Configuration (BOT_TOKEN, CHAT_ID)
+├── multi_monitor.py          # Main monitoring orchestrator
+├── config.example.py         # Configuration template
 ├── filters.py               # Department filtering logic
+├── telegram_formatter.py    # Telegram message formatting
 ├── check_now.sh             # Monitoring script
 ├── sources.py               # Source configurations
 ├── scrapers/               # Scraper implementations
-│   ├── adiga_scraper.py    # Adiga.kr scraper
+│   ├── adiga_scraper.py    # Adiga.kr scraper (currently active)
 │   ├── scraper_base.py     # Base scraper class
 │   └── __init__.py
-└── README.md
+├── state.json              # Tracked articles (auto-generated)
+├── .gitignore             # Security: excludes tokens and secrets
+└── README.md              # This file
 ```
 
 ## 🔧 Configuration
@@ -102,23 +105,43 @@ DEPARTMENT_KEYWORDS = {
 ## 📊 Current Data Sources
 
 - **Adiga (어디가)**: Korean university admission news portal
-- *More sources can be added easily*
+  - URL: https://adiga.kr
+  - Status: ✅ Active
+  - Coverage: General admission news and announcements
+
+*More sources can be added easily through the modular scraper system*
 
 ## 🤖 Telegram Integration
 
-The system sends formatted Telegram messages:
+The system sends formatted Telegram messages with HTML formatting:
 
 ```
-🎓 [새 입학 공고] 서울대학교 음악학과
+🎵 [새 입학 공고] 서울대학교 음악학과 추가모집
 
-📌 프로그램: 음악학과 추가모집
-🏫 대학교: 서울대학교
-📅 마감일: 2024.12.20
-🔗 링크: https://example.com/admission
+📌 부서/학과: music
+📝 내용: 서울대학교 음악학과에서 2026학년도 추가모집을 실시합니다...
+🔗 링크: https://adiga.kr/ArticleDetail.do?articleID=26546
 
-📋 키워드: 음악, 추가모집, 입시
-📍 지역: 서울
+#대학입시 #music
 ```
+
+## 🔄 GitHub Integration
+
+### Secure Push Scripts
+The repository includes secure scripts for automated GitHub pushes:
+
+```bash
+# Setup (one-time)
+./setup_github.sh
+
+# Manual push
+./push_to_github.sh
+
+# Automated daily push
+./daily_push.sh
+```
+
+**Security Note**: All tokens and credentials are automatically excluded via `.gitignore`.
 
 ## 🐛 Troubleshooting
 
@@ -138,19 +161,25 @@ The system sends formatted Telegram messages:
    - System uses content hashing to detect duplicates
    - Check `state.json` for tracking history
 
+4. **URL gives 404**
+   - Adiga.kr may require session cookies
+   - Articles use JavaScript navigation (`fnDetailPopup()`)
+   - Consider using main site URL as fallback
+
 ### Debug Mode
 Run with verbose output:
 ```bash
-python multi_monitor.py 2>&1 | grep -i "filtered\|kept\|telegram"
+python multi_monitor.py 2>&1 | grep -i "filtered\|kept\|telegram\|error"
 ```
 
 ## 📈 Future Enhancements
 
-- [ ] Web dashboard for monitoring status
-- [ ] Email notifications
-- [ ] More data sources (각 대학교 입학처)
-- [ ] Advanced filtering (지역, 전형별)
-- [ ] Database integration for long-term tracking
+- Web dashboard for monitoring status
+- Email notifications as alternative to Telegram
+- More data sources (각 대학교 입학처 직접 스크래핑)
+- Advanced filtering (지역, 전형별, 모집인원)
+- Database integration for long-term tracking
+- REST API for external integrations
 
 ## 🤝 Contributing
 
@@ -159,24 +188,37 @@ python multi_monitor.py 2>&1 | grep -i "filtered\|kept\|telegram"
 3. Add your scraper or improvements
 4. Submit a pull request
 
+### Development Notes
+- Follow the `scraper_base.py` interface for new scrapers
+- Add department keywords to `filters.py`
+- Test with `python test_integration.py` before submitting
+
 ## 📄 License
 
 MIT License - see LICENSE file for details
 
 ## 🙏 Acknowledgements
 
-- Built for Korean university admission monitoring
+- Built for Korean university admission monitoring community
 - Uses BeautifulSoup for web scraping
 - Telegram Bot API for notifications
 - Community contributors for scraper implementations
-```
-Updated: 2026-02-05
-## Key Changes to README:
-1. **Updated feature description** from "music admission" to "multiple departments"
-2. **Added department list** showing all tracked departments
-3. **Updated configuration instructions** to reflect current system
-4. **Added department configuration section** showing how to add new departments
-5. **Updated troubleshooting** for multi-department filtering
-6. **Updated Telegram message example** to show department information
 
-The README now accurately reflects that your system monitors **Music, Korean, English, and Liberal Arts departments** (with easy expansion to more departments).
+---
+
+**Last Updated**: 05 February 2026  
+**Active Development**: Yes  
+**Primary Maintainer**: tantry  
+**Telegram Support**: @ReiUniMonitor_bot (KR Uni Monitor)
+```
+
+## 🎯 **Key updates I made:**
+
+1. **Current Status**: Reflects the actual working system with Adiga scraper
+2. **Telegram Format**: Shows actual message format with HTML
+3. **URL Pattern**: Updated to show `ArticleDetail.do?articleID=` format
+4. **GitHub Integration**: Added section about secure push scripts
+5. **Troubleshooting**: Added specific solutions for 404 URLs and JavaScript navigation
+6. **Structure**: Updated to match your actual file structure
+7. **Security**: Emphasized `.gitignore` protection for tokens
+8. **Acknowledgements**: Added your Telegram bot info
