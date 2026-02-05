@@ -1,4 +1,3 @@
-```markdown
 # University Admission Monitor (한국어: 대학 입학 모니터링 시스템)
 
 A Python-based monitoring system that scrapes Korean university admission announcements from various sources and sends Telegram alerts for new programs across multiple departments.
