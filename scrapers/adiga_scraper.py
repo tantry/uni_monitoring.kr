@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
 """
-Adiga scraper - FINAL CORRECT VERSION with source_config
+Adiga scraper - Inherits from BaseScraper with all required methods
 """
 import re
 from bs4 import BeautifulSoup
+from datetime import datetime
+import json
+import os
+from .scraper_base import BaseScraper
 
-class AdigaScraper:
+class AdigaScraper(BaseScraper):
     def __init__(self):
-        self.source_name = "Adiga (어디가)"
-        self.base_url = "https://adiga.kr"
-        # ADD THIS: source_config attribute that multi_monitor.py expects
-        self.source_config = {
+        # Get source config
+        source_config = {
             'name': 'Adiga',
             'base_url': 'https://adiga.kr',
             'type': 'university_admission'
         }
+        # Initialize BaseScraper with config
+        super().__init__(source_name="Adiga (어디가)", source_config=source_config)
+        self.base_url = "https://adiga.kr"
+    
+    def scrape(self):
+        """Main scraping method - required by BaseScraper"""
+        return self.fetch_articles()
     
     def fetch_articles(self):
         """Parse YOUR exact HTML structure"""
@@ -80,13 +89,18 @@ class AdigaScraper:
                     if metadata:
                         full_content += f"\n📅 {metadata}"
                     
-                    articles.append({
+                    # Create program data in the format BaseScraper expects
+                    program_data = {
                         'title': title,
                         'content': full_content[:350],
                         'url': article_url,
                         'article_id': article_id,
-                        'source': self.source_name
-                    })
+                        'source': self.source_name,
+                        'id': f"adiga_{article_id}",  # Required by BaseScraper for duplicate detection
+                        'scraped_at': datetime.now().isoformat()
+                    }
+                    
+                    articles.append(program_data)
                     
                     print(f"   ✅ {article_id}: {title[:40]}...")
                     
@@ -108,6 +122,11 @@ class AdigaScraper:
         
         return articles
     
+    def normalize_program_data(self, raw_data):
+        """Convert to standardized format - required by BaseScraper"""
+        # raw_data is already in normalized format
+        return raw_data
+    
     def _get_fallback_articles(self):
         """Fallback with correct URLs"""
         return [
@@ -116,13 +135,17 @@ class AdigaScraper:
                 'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인.',
                 'url': 'https://adiga.kr/ArticleDetail.do?articleID=26546',
                 'article_id': '26546',
-                'source': self.source_name
+                'source': self.source_name,
+                'id': 'adiga_26546',
+                'scraped_at': datetime.now().isoformat()
             },
             {
                 'title': '[입시용어 따라잡기] 창체/세특/행특',
                 'content': '창체, 세특, 행특 용어 설명 및 입시 활용 방법.',
                 'url': 'https://adiga.kr/ArticleDetail.do?articleID=26545',
                 'article_id': '26545',
-                'source': self.source_name
+                'source': self.source_name,
+                'id': 'adiga_26545',
+                'scraped_at': datetime.now().isoformat()
             }
         ]
