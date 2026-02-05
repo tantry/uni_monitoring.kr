@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Adiga scraper - FINAL CORRECT VERSION for your exact HTML
+Adiga scraper - FINAL CORRECT VERSION with source_config
 """
 import re
 from bs4 import BeautifulSoup
@@ -9,6 +9,12 @@ class AdigaScraper:
     def __init__(self):
         self.source_name = "Adiga (어디가)"
         self.base_url = "https://adiga.kr"
+        # ADD THIS: source_config attribute that multi_monitor.py expects
+        self.source_config = {
+            'name': 'Adiga',
+            'base_url': 'https://adiga.kr',
+            'type': 'university_admission'
+        }
     
     def fetch_articles(self):
         """Parse YOUR exact HTML structure"""
@@ -39,7 +45,6 @@ class AdigaScraper:
                     onclick = anchor.get('onclick', '')
                     
                     # Extract article ID - handles fnDetailPopup("26546")
-                    # Match both single and double quotes: 'fnDetailPopup("26546")' 
                     match = re.search(r'fnDetailPopup\(["\'](\d+)["\']\)', onclick)
                     if not match:
                         continue
