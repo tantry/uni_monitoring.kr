@@ -42,7 +42,7 @@ class MultiMonitor:
     def _init_scrapers(self):
         """Initialize all available scrapers"""
         if HAS_ADIGA:
-            self.scrapers.append(AdigaScraper('adiga', SOURCE_CONFIG['adigo']))
+            self.scrapers.append(AdigaScraper())
             print(f"✅ Loaded Adiga scraper")
         
         print(f"📊 Total scrapers: {len(self.scrapers)}")

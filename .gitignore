@@ -5,3 +5,16 @@ uni_monitor_data/
 *.log
 __pycache__/
 *.pyc
+
+# GitHub tokens and sensitive data
+.github_token
+push_config.txt
+config.py
+.env
+*.secret
+*.key
+credentials/
+secrets/
+state.json
+__pycache__/
+*.pyc

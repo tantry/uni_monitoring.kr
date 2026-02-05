@@ -1,41 +1,32 @@
 #!/bin/bash
-# Quick recovery script for new chat sessions
-echo "=== UNIVERSITY MONITOR QUICK RECOVERY ==="
+# Quick recovery for University Admission Monitor
+
+echo "🔄 Starting recovery process..."
+
+# Backup current files
+echo "📦 Backing up current files..."
+timestamp=$(date +%Y%m%d_%H%M%S)
+backup_dir="backup_${timestamp}"
+mkdir -p "$backup_dir"
+cp -f multi_monitor.py "$backup_dir/" 2>/dev/null || true
+cp -f state.json "$backup_dir/" 2>/dev/null || true
+
+# Install the fixed version
+echo "🔧 Installing fixed monitor..."
+cp -f multi_monitor_fixed.py multi_monitor.py
+
+# Test the configuration
+echo "🧪 Testing configuration..."
+python3 -c "import config; print('✅ Config loaded:', config.BOT_TOKEN[:10] + '...')"
+
+# Clear state to force fresh alerts
+echo "🗑️ Clearing state for fresh alerts..."
+rm -f state.json
+
+# Run a test
+echo "🚀 Running test..."
+python3 test_integration.py
+
 echo ""
-echo "PROJECT STATUS SUMMARY:"
-echo "-----------------------"
-echo "Project: University Admission Monitor"
-echo "Location: ~/uni_monitoring"
-echo "Current Phase: Fixing Adiga article links"
-echo ""
-echo "CORE FILES:"
-echo "-----------"
-for file in uni_monitor.py deadline_alerts.py check_now.sh FUTURE_PROJECTS.md; do
-    if [ -f "$file" ]; then
-        size=$(stat -c%s "$file")
-        lines=$(wc -l < "$file" 2>/dev/null || echo "N/A")
-        echo "✓ $file (${size} bytes, ${lines} lines)"
-    else
-        echo "✗ $file (MISSING)"
-    fi
-done
-echo ""
-echo "LAST TEST:"
-echo "----------"
-if [ -f "test_link_extraction.py" ]; then
-    echo "Test script exists, last run:"
-    python3 test_link_extraction.py 2>&1 | tail -10
-else
-    echo "No recent test found"
-fi
-echo ""
-echo "TELEGRAM CONFIG:"
-echo "----------------"
-grep -E "(BOT_TOKEN|CHANNEL_ID)" uni_monitor.py deadline_alerts.py | head -4
-echo ""
-echo "NEXT ACTION:"
-echo "------------"
-echo "Run: ./check_now.sh"
-echo "Or: python3 uni_monitor.py"
-echo ""
-echo "GITHUB READY: Use this output for new chat"
+echo "✅ Recovery complete!"
+echo "Next: Run the monitor with: python3 multi_monitor.py"
