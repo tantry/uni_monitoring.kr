@@ -2,7 +2,6 @@
 """
 Adiga scraper for adiga.kr - University Admission Monitor
 Migrated to inherit from BaseScraper for robust architecture
-WITH BACKWARD COMPATIBILITY FIXES
 """
 import re
 from typing import List, Dict, Any, Optional
@@ -45,16 +44,7 @@ class AdigaScraper(BaseScraper):
         self.max_articles = config.get('max_articles', 10)
         self.display_name = config.get('display_name', 'Adiga (어디가)')
         
-        # BACKWARD COMPATIBILITY: Add attributes expected by multi_monitor.py
-        self.source_config = {
-            'name': self.display_name,
-            'base_url': self.base_url,
-            'type': 'university_admission',
-            'html_file_path': self.html_file_path
-        }
-        self.source_name = self.display_name
-        
-        self.logger.info(f"Initialized {self.display_name} scraper (with backward compatibility)")
+        self.logger.info(f"Initialized {self.display_name} scraper")
     
     def fetch_articles(self) -> List[Dict[str, Any]]:
         """
@@ -346,7 +336,6 @@ class LegacyAdigaScraper:
         }
         self._scraper = AdigaScraper(config)
         self.source_name = self._scraper.display_name
-        self.source_config = self._scraper.source_config
     
     def scrape(self):
         """Legacy method name support."""
@@ -355,15 +344,11 @@ class LegacyAdigaScraper:
     def find_new_programs(self, current_programs):
         """Legacy method name support."""
         return self._scraper.find_new_programs(current_programs)
-    
-    def save_detected(self, programs):
-        """Legacy method name support."""
-        return self._scraper.save_detected(programs)
 
 
 if __name__ == "__main__":
-    # Test the migrated scraper with backward compatibility
-    print("Testing AdigaScraper with Backward Compatibility Fixes...")
+    # Test the migrated scraper
+    print("Testing AdigaScraper Migration...")
     print("=" * 60)
     
     # Create config matching sources.yaml
@@ -371,7 +356,7 @@ if __name__ == "__main__":
         'name': 'adiga',
         'enabled': True,
         'base_url': 'https://adiga.kr',
-        'scraper_class': 'adiga_scraper',
+        'scraper_class': 'AdigaScraper',
         'schedule': '*/30 * * * *',
         'priority': 1,
         'timeout': 30,
@@ -382,35 +367,57 @@ if __name__ == "__main__":
     }
     
     try:
-        # Test 1: Create instance and check attributes
+        # Test 1: Create instance
         print("\n1. Creating AdigaScraper instance...")
         scraper = AdigaScraper(config)
-        print(f"   ✅ Created {scraper.display_name}")
+        print(f"   ✅ Successfully created {scraper.display_name}")
+        print(f"   Name: {scraper.name}, Base URL: {scraper.base_url}")
         
-        # Check backward compatibility attributes
-        print(f"   source_name: {scraper.source_name}")
-        print(f"   source_config keys: {list(scraper.source_config.keys())}")
+        # Test 2: Fetch articles
+        print("\n2. Testing fetch_articles()...")
+        raw_articles = scraper.fetch_articles()
+        print(f"   ✅ Fetched {len(raw_articles)} raw articles")
         
-        # Test 2: multi_monitor.py compatibility
-        print("\n2. Testing multi_monitor.py compatibility...")
-        required_attrs = ['source_config', 'source_name', 'scrape', 'find_new_programs', 'save_detected']
-        all_present = all(hasattr(scraper, attr) for attr in required_attrs)
-        print(f"   ✅ All required attributes present: {all_present}")
+        if raw_articles:
+            # Test 3: Parse article
+            print("\n3. Testing parse_article()...")
+            parsed = scraper.parse_article(raw_articles[0])
+            print(f"   ✅ Parsed article ID: {parsed.get('id')}")
+            print(f"   Title: {parsed.get('title')[:50]}...")
+            print(f"   URL: {parsed.get('url')}")
+            print(f"   Source: {parsed.get('source')}")
+            
+            # Test 4: Full scrape
+            print("\n4. Testing full scrape() method...")
+            articles = scraper.scrape()
+            print(f"   ✅ Processed {len(articles)} articles")
+            
+            # Test 5: State management
+            print("\n5. Testing state management...")
+            if articles:
+                save_result = scraper.save_detected(articles)
+                print(f"   Save detected: {'✅ Success' if save_result else '❌ Failed'}")
+                
+                previous = scraper.load_previous()
+                print(f"   Load previous: {len(previous)} articles")
+                
+                new_programs = scraper.find_new_programs(articles)
+                print(f"   New programs: {len(new_programs)}")
         
-        # Test 3: Legacy wrapper
-        print("\n3. Testing LegacyAdigaScraper wrapper...")
+        # Test 6: Legacy compatibility
+        print("\n6. Testing legacy compatibility...")
         legacy = LegacyAdigaScraper()
-        print(f"   ✅ Legacy wrapper created")
-        print(f"   Legacy source_name: {legacy.source_name}")
+        legacy_result = legacy.scrape()
+        print(f"   Legacy scrape: {len(legacy_result)} articles")
         
         print("\n" + "=" * 60)
-        print("✅ Backward compatibility fixes applied successfully!")
-        print("\nNext steps:")
-        print("1. Replace with: cp scrapers/adiga_scraper_fixed.py scrapers/adiga_scraper.py")
-        print("2. Test multi_monitor.py to ensure it works")
-        print("3. Run the full monitoring system")
+        print("✅ All migration tests passed!")
+        print(f"\nNext steps:")
+        print(f"1. Replace current scrapers/adiga_scraper.py with this migrated version")
+        print(f"2. Test with: python -m scrapers.adiga_scraper")
+        print(f"3. Update multi_monitor.py to use new architecture")
         
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\n❌ Migration test failed: {e}")
         import traceback
         traceback.print_exc()

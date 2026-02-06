@@ -1,0 +1,87 @@
+{
+  "last_updated": "2026-02-06T12:24:34.696490",
+  "source": "adiga",
+  "total_articles": 4,
+  "articles": [
+    {
+      "id": "adiga_26546",
+      "title": "[입시의 정석] 정시 등록 오늘부터…'이중 등록' 유의해야",
+      "url": "https://adiga.kr/ArticleDetail.do?articleID=26546",
+      "source": "adiga",
+      "scraped_at": "2026-02-06T12:24:34.695628",
+      "content": "<EBS뉴스 2026-02-03 발췌> 기사 제목 : [입시의 정석] 정시 등록 오늘부터…'이중 등록' 유의해야 뉴스 내용 전체 보기\n📅 2026 | 공통 | 대입상담센터 | 2026-02-04",
+      "published_date": "2026-02-03T00:00:00",
+      "deadline": null,
+      "university": null,
+      "department": null,
+      "metadata": {
+        "source": "Adiga (어디가)",
+        "scraped_at": "2026-02-06T12:24:34.692978",
+        "article_id": "26546",
+        "has_content": true,
+        "has_metadata": true,
+        "onclick_handler": "fnDetailPopup(\"26546\")"
+      }
+    },
+    {
+      "id": "adiga_26545",
+      "title": "[입시용어 따라잡기] 창체/세특/행특",
+      "url": "https://adiga.kr/ArticleDetail.do?articleID=26545",
+      "source": "adiga",
+      "scraped_at": "2026-02-06T12:24:34.695643",
+      "content": "<베리타스알파 2026-02-02 발췌> 기사 제목 : [입시용어 따라잡기] 창체/세특/행특 뉴스 내용 전체 보기\n📅 2026 | 공통 | 대입상담센터 | 2026-02-03",
+      "published_date": "2026-02-02T00:00:00",
+      "deadline": null,
+      "university": null,
+      "department": null,
+      "metadata": {
+        "source": "Adiga (어디가)",
+        "scraped_at": "2026-02-06T12:24:34.693482",
+        "article_id": "26545",
+        "has_content": true,
+        "has_metadata": true,
+        "onclick_handler": "fnDetailPopup(\"26545\")"
+      }
+    },
+    {
+      "id": "adiga_26522",
+      "title": "[입시용어 따라잡기] 추가합격/추가모집",
+      "url": "https://adiga.kr/ArticleDetail.do?articleID=26522",
+      "source": "adiga",
+      "scraped_at": "2026-02-06T12:24:34.695654",
+      "content": "<베리타스알파 2026-01-05 발췌> 기사 제목 : [입시용어 따라잡기] 추가합격/추가모집 뉴스 내용 전체 보기\n📅 2026 | 공통 | 대입상담센터 | 2026-01-30",
+      "published_date": "2026-01-05T00:00:00",
+      "deadline": null,
+      "university": null,
+      "department": null,
+      "metadata": {
+        "source": "Adiga (어디가)",
+        "scraped_at": "2026-02-06T12:24:34.693936",
+        "article_id": "26522",
+        "has_content": true,
+        "has_metadata": true,
+        "onclick_handler": "fnDetailPopup(\"26522\")"
+      }
+    },
+    {
+      "id": "adiga_26521",
+      "title": "진로의 폭 넓히는 다전공 제도",
+      "url": "https://adiga.kr/ArticleDetail.do?articleID=26521",
+      "source": "adiga",
+      "scraped_at": "2026-02-06T12:24:34.695665",
+      "content": "<내일신문 2026-01-29 발췌> 기사 제목 : 진로의 폭 넓히는 다전공 제도 뉴스 내용 전체 보기\n📅 2026 | 공통 | 대입상담센터 | 2026-01-30",
+      "published_date": "2026-01-29T00:00:00",
+      "deadline": null,
+      "university": null,
+      "department": null,
+      "metadata": {
+        "source": "Adiga (어디가)",
+        "scraped_at": "2026-02-06T12:24:34.694494",
+        "article_id": "26521",
+        "has_content": true,
+        "has_metadata": true,
+        "onclick_handler": "fnDetailPopup(\"26521\")"
+      }
+    }
+  ]
+}

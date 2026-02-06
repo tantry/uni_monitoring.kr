@@ -3,9 +3,8 @@ sources:
     name: "Adiga (어디가)"
     enabled: true
     base_url: "https://adiga.kr"
-    scraper_class: "AdigaScraper"
+    scraper_class: "adiga_scraper"  # Changed to match filename without .py
     schedule: "*/30 * * * *"
     priority: 1
     timeout: 30
     retry_attempts: 3
-    user_agent: "Mozilla/5.0 UniversityMonitor/1.0"
