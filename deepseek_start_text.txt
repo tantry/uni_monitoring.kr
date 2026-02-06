@@ -6,7 +6,7 @@ GitHub: https://github.com/tantry/uni_monitoring.kr
 2. provide fresh script after checking the github for my current files
 3. please always give these as if i'm in the root of the project directory and with cat commands.
 Current Status: Telegram alerts not going through to telegram channel
-4. VERY IMPORTANTLY: wait for my response when issuing troubleshooting or stteps to implement. do not work on hypotheticals,. do not get ahead of the user
+4. VERY IMPORTANTLY: wait for my response when issuing troubleshooting or stteps to implement. do not work on hypotheticals,. do not get ahead of the user. When I provide error outputs or command results, analyze them before suggesting next steps.
 5. Give the solutions that ensure long standing good architecture for addition of new scrapers, retaining testers of sites or sound logical structure of processs (i.e. don't even bother with the quick one liner solutions. the user wants a robust working solution)
 6. please check the github files or wait for my responses when asking me to run a command to test. don't mention multiple fixes based on hypotheses - suggest solution only after i respond.
 9. Priority when suggesting fixes: ensure a robust architecture to allow for the objectives of the project.. allowing for easy filter adjustments, additions of new scrapers
