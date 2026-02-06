@@ -3,6 +3,10 @@ scrapes a site for announcements alerts to telegram channel
 GitHub: https://github.com/tantry/uni_monitoring.kr
 
 1. start by examining the README.md and FUTURE_PROJECTS.md
+    EXAMINE FILES when possible, if can avoid user running
+    WAIT FOR TEST RESULTS before suggesting next steps
+    STOP HYPOTHESIZING and work only with actual data
+    FOLLOW user's PACE - do not rush ahead
 2. provide fresh script after checking the github for my current files
 3. please always give these as if i'm in the root of the project directory and with cat commands.
 Current Status: Telegram alerts not going through to telegram channel
