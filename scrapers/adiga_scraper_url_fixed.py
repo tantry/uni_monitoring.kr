@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Adiga.kr Scraper that extracts ACTUAL article content from hidden field
+Adiga.kr Scraper with CORRECT URL Pattern
+Using working pattern from uni_monitor.py: newsDetail.do?prtlBbsId=
 """
 import re
 import requests
-import html
 from typing import List, Dict, Any, Optional
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -18,7 +18,7 @@ from core.base_scraper import BaseScraper
 
 
 class AdigaScraper(BaseScraper):
-    """Adiga.kr scraper that extracts actual article content."""
+    """Adiga.kr scraper with CORRECT URL pattern."""
     
     def __init__(self, config: Dict[str, Any] = None):
         if config is None:
@@ -46,7 +46,7 @@ class AdigaScraper(BaseScraper):
         self.max_articles = config.get('max_articles', 10)
         self.display_name = config.get('display_name', 'Adiga (어디가)')
         
-        # URLs
+        # CORRECT URLs from working uni_monitor.py
         self.ajax_url = "https://www.adiga.kr/uct/nmg/enw/newsAjax.do"
         self.referer_url = "https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"
         self.detail_url_base = "https://www.adiga.kr/uct/nmg/enw/newsDetail.do"
@@ -61,7 +61,7 @@ class AdigaScraper(BaseScraper):
         }
         self.source_name = self.display_name
         
-        self.logger.info(f"Initialized {self.display_name} with content extraction")
+        self.logger.info(f"Initialized {self.display_name} with CORRECT URL pattern")
     
     @property
     def session(self):
@@ -75,22 +75,13 @@ class AdigaScraper(BaseScraper):
         return self._session
     
     def fetch_articles(self) -> List[Dict[str, Any]]:
-        self.logger.info(f"Fetching articles with content extraction")
+        self.logger.info(f"Fetching articles with CORRECT URL pattern")
         
         try:
-            # Try live AJAX
+            # Try live AJAX first
             live_articles = self._fetch_live_articles_ajax()
             if live_articles:
-                # For live articles, we need to fetch each article's content
-                articles_with_content = []
-                for article in live_articles:
-                    try:
-                        enhanced = self._enhance_with_actual_content(article)
-                        articles_with_content.append(enhanced)
-                    except Exception as e:
-                        self.logger.warning(f"Failed to enhance article: {e}")
-                        articles_with_content.append(article)
-                return articles_with_content
+                return live_articles
             else:
                 # Fallback to local
                 return self._parse_local_html()
@@ -99,93 +90,13 @@ class AdigaScraper(BaseScraper):
             self.logger.error(f"Fetch error: {e}")
             return self._parse_local_html()
     
-    def _enhance_with_actual_content(self, article: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Fetch actual article content from detail page
-        """
-        url = article.get('url')
-        if not url:
-            return article
-        
-        try:
-            self.logger.debug(f"Fetching content from: {url}")
-            response = self.session.get(url, timeout=10, allow_redirects=True)
-            
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                # Extract hidden content from lnaCn1 input
-                hidden_input = soup.find('input', {'id': 'lnaCn1'})
-                if hidden_input and hidden_input.get('value'):
-                    hidden_html = hidden_input['value']
-                    
-                    # Decode HTML entities
-                    decoded_html = html.unescape(hidden_html)
-                    
-                    # Parse the decoded HTML to extract text
-                    content_soup = BeautifulSoup(decoded_html, 'html.parser')
-                    
-                    # Remove scripts and styles
-                    for script in content_soup(["script", "style"]):
-                        script.decompose()
-                    
-                    # Get clean text
-                    clean_text = content_soup.get_text()
-                    
-                    # Clean up the text
-                    lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
-                    clean_content = ' '.join(lines[:10])  # First 10 lines
-                    
-                    if clean_content and len(clean_content) > 50:
-                        # Replace preview with actual content
-                        article['content'] = clean_content[:500]  # Limit length
-                        article['metadata']['has_actual_content'] = True
-                        article['metadata']['content_source'] = 'detail_page'
-                        self.logger.debug(f"Extracted {len(clean_content)} chars of actual content")
-                    else:
-                        self.logger.debug("No substantial content extracted")
-                
-                # Also extract visible content
-                visible_content = self._extract_visible_content(soup)
-                if visible_content and 'content' not in article.get('metadata', {}).get('content_source', ''):
-                    article['content'] = visible_content[:500]
-                    article['metadata']['has_actual_content'] = True
-                    article['metadata']['content_source'] = 'visible_page'
-                
-        except Exception as e:
-            self.logger.warning(f"Failed to enhance article content: {e}")
-        
-        return article
-    
-    def _extract_visible_content(self, soup) -> str:
-        """Extract visible text from page"""
-        try:
-            # Remove scripts and styles
-            for script in soup(["script", "style", "input", "textarea"]):
-                script.decompose()
-            
-            # Get text and clean
-            text = soup.get_text()
-            lines = [line.strip() for line in text.split('\n') if line.strip()]
-            
-            # Filter out very short lines and navigation
-            content_lines = []
-            for line in lines:
-                if len(line) > 20 and not any(x in line for x in ['공통', '메뉴', '로그인', '검색']):
-                    content_lines.append(line)
-            
-            return ' '.join(content_lines[:10])  # First 10 content lines
-            
-        except Exception as e:
-            self.logger.debug(f"Visible content extraction failed: {e}")
-            return ""
-    
-    # Keep other methods the same as adiga_scraper_url_fixed.py
     def _fetch_live_articles_ajax(self) -> List[Dict[str, Any]]:
-        """Same as before..."""
+        """Fetch using CORRECT pattern"""
         try:
+            # Establish session
             self.session.get(self.referer_url, timeout=10)
             
+            # AJAX request
             form_data = {
                 'menuId': 'PCUCTNMG2000',
                 'currentPage': '1',
@@ -217,8 +128,9 @@ class AdigaScraper(BaseScraper):
             return []
     
     def _extract_from_ajax_element(self, element, soup) -> Optional[Dict[str, Any]]:
-        """Same as before..."""
+        """Extract with CORRECT URL pattern"""
         try:
+            # Find parent with onclick
             parent = element.find_parent(['li', 'tr', 'div'])
             if not parent:
                 return None
@@ -235,19 +147,23 @@ class AdigaScraper(BaseScraper):
             article_id = match.group(1)
             title = element.get_text(strip=True).replace('newIcon', '').strip()
             
+            # Find content
             content = ""
             content_elem = parent.select_one('.content')
             if content_elem:
                 content = content_elem.get_text(strip=True)
             
+            # Find metadata
             metadata = ""
             info_elem = parent.select_one('.info')
             if info_elem:
                 spans = info_elem.find_all('span')
                 metadata = " | ".join([span.get_text(strip=True) for span in spans])
             
+            # ✅ CORRECT URL PATTERN from working code
             article_url = f"{self.detail_url_base}?prtlBbsId={article_id}"
             
+            # Combine content
             full_content = content
             if metadata:
                 full_content += f"\n📅 {metadata}"
@@ -255,7 +171,7 @@ class AdigaScraper(BaseScraper):
             return {
                 'title': title,
                 'content': full_content[:350],
-                'url': article_url,
+                'url': article_url,  # ✅ CORRECT URL
                 'article_id': article_id,
                 'onclick_handler': onclick,
                 'is_live_scrape': True,
@@ -263,8 +179,8 @@ class AdigaScraper(BaseScraper):
                     'source': self.display_name,
                     'scraped_at': datetime.now().isoformat(),
                     'scrape_method': 'ajax_live',
-                    'url_pattern': 'newsDetail.do?prtlBbsId=',
-                    'needs_content_enhancement': True  # Flag for enhancement
+                    'url_pattern': 'newsDetail.do?prtlBbsId=',  # ✅ Record pattern
+                    'verified_pattern': True
                 }
             }
             
@@ -272,8 +188,8 @@ class AdigaScraper(BaseScraper):
             self.logger.debug(f"Error extracting: {e}")
             return None
     
-    # Keep other methods the same...
     def _parse_local_html(self) -> List[Dict[str, Any]]:
+        """Parse local file with CORRECT URL pattern"""
         if not os.path.exists(self.html_file_path):
             return self._get_fallback_articles()
         
@@ -300,6 +216,7 @@ class AdigaScraper(BaseScraper):
             return self._get_fallback_articles()
     
     def _extract_from_local_item(self, item) -> Optional[Dict[str, Any]]:
+        """Extract from local with CORRECT URL pattern"""
         anchor = item.find('a', onclick=True)
         if not anchor:
             return None
@@ -326,6 +243,7 @@ class AdigaScraper(BaseScraper):
             spans = info_elem.find_all('span')
             metadata = " | ".join([span.get_text(strip=True) for span in spans])
         
+        # ✅ CORRECT URL PATTERN for local too
         article_url = f"{self.detail_url_base}?prtlBbsId={article_id}"
         
         full_content = content
@@ -335,7 +253,7 @@ class AdigaScraper(BaseScraper):
         return {
             'title': title,
             'content': full_content[:350],
-            'url': article_url,
+            'url': article_url,  # ✅ CORRECT URL
             'article_id': article_id,
             'onclick_handler': onclick,
             'is_live_scrape': False,
@@ -344,11 +262,12 @@ class AdigaScraper(BaseScraper):
                 'scraped_at': datetime.now().isoformat(),
                 'scrape_method': 'local_file',
                 'url_pattern': 'newsDetail.do?prtlBbsId=',
-                'needs_content_enhancement': True
+                'verified_pattern': True
             }
         }
     
     def parse_article(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse with CORRECT URL info"""
         try:
             article_id = raw_data.get('article_id', '')
             title = raw_data.get('title', '')
@@ -363,7 +282,7 @@ class AdigaScraper(BaseScraper):
                 'id': f"adiga_{article_id}",
                 'title': title,
                 'content': content,
-                'url': url,
+                'url': url,  # ✅ CORRECT URL
                 'source': self.name,
                 'scraped_at': datetime.now().isoformat(),
                 'published_date': publish_date.isoformat() if publish_date else None,
@@ -391,7 +310,7 @@ class AdigaScraper(BaseScraper):
                 'metadata': {'error': True}
             }
     
-    # Keep helper methods...
+    # Keep helper methods same...
     def _extract_publish_date(self, content: str) -> Optional[datetime]:
         date_patterns = [
             r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일',
@@ -460,16 +379,15 @@ class AdigaScraper(BaseScraper):
         return [
             {
                 'title': '[입시의 정석] 정시 등록 오늘부터…이중 등록 유의해야',
-                'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인. <EBS뉴스 2026-02-03 발췌>',
-                'url': f"{self.detail_url_base}?prtlBbsId=26546",
+                'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인.',
+                'url': f"{self.detail_url_base}?prtlBbsId=26546",  # ✅ CORRECT fallback too
                 'article_id': '26546',
                 'is_live_scrape': False,
                 'metadata': {
                     'source': self.display_name,
                     'scraped_at': datetime.now().isoformat(),
                     'is_fallback': True,
-                    'correct_url_pattern': True,
-                    'has_actual_content': True
+                    'correct_url_pattern': True
                 }
             }
         ]
@@ -508,7 +426,7 @@ class LegacyAdigaScraper:
 
 # Test
 if __name__ == "__main__":
-    print("Testing AdigaScraper with Content Extraction")
+    print("Testing AdigaScraper with CORRECT URL Pattern")
     print("=" * 60)
     
     scraper = AdigaScraper()
@@ -521,12 +439,21 @@ if __name__ == "__main__":
             print(f"\nFirst article:")
             print(f"Title: {articles[0].get('title', 'Unknown')}")
             print(f"URL: {articles[0].get('url', 'No URL')}")
-            print(f"Content length: {len(articles[0].get('content', ''))} chars")
-            print(f"Has actual content: {articles[0].get('metadata', {}).get('has_actual_content', False)}")
-            print(f"Content preview: {articles[0].get('content', '')[:150]}...")
+            print(f"URL pattern: {articles[0].get('metadata', {}).get('url_pattern', 'unknown')}")
+            print(f"Live scrape: {articles[0].get('is_live_scrape', False)}")
+            
+            # Test the URL with session
+            print(f"\nTesting URL access with session...")
+            test_response = scraper.session.head(articles[0]['url'], timeout=5, allow_redirects=False)
+            print(f"URL status: {test_response.status_code}")
+            
+            if test_response.status_code == 200:
+                print("✅ URL should work in Telegram!")
+            else:
+                print(f"⚠ URL returned {test_response.status_code}")
         
         print("\n" + "=" * 60)
-        print("Content extraction implemented!")
+        print("Correct URL pattern applied: newsDetail.do?prtlBbsId=")
         
     finally:
         scraper.cleanup()

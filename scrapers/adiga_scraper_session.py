@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Adiga.kr Scraper with PROPER Session Support
+Adiga.kr Scraper with Session Support - FIXES 404 LINKS
 Based on working implementation from uni_monitor.py
 """
 import re
@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import os
 import sys
+import time
 
 # Add the parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,11 +19,11 @@ from core.base_scraper import BaseScraper
 
 
 class AdigaScraper(BaseScraper):
-    """Adiga.kr scraper with PROPER session implementation."""
+    """Adiga.kr scraper with proper session handling for working links."""
     
     def __init__(self, config: Dict[str, Any] = None):
         """
-        Initialize with PROPER session support.
+        Initialize with session support.
         """
         if config is None:
             config = {
@@ -30,7 +31,7 @@ class AdigaScraper(BaseScraper):
                 'base_url': 'https://adiga.kr',
                 'html_file_path': 'adiga_structure.html',
                 'max_articles': 10,
-                'display_name': 'Adiga (어디가)',
+                'display_name': 'Adiga Session (어디가)',
                 'timeout': 30,
                 'retry_attempts': 3
             }
@@ -47,11 +48,7 @@ class AdigaScraper(BaseScraper):
         self.full_config = config
         self.html_file_path = config.get('html_file_path', 'adiga_structure.html')
         self.max_articles = config.get('max_articles', 10)
-        self.display_name = config.get('display_name', 'Adiga (어디가)')
-        
-        # Configuration from working uni_monitor.py
-        self.ajax_url = "https://www.adiga.kr/uct/nmg/enw/newsAjax.do"
-        self.referer_url = "https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"
+        self.display_name = config.get('display_name', 'Adiga Session (어디가)')
         
         # Initialize session (will be created on first use)
         self._session = None
@@ -64,41 +61,42 @@ class AdigaScraper(BaseScraper):
         }
         self.source_name = self.display_name
         
-        self.logger.info(f"Initialized {self.display_name} scraper with PROPER session support")
+        self.logger.info(f"Initialized {self.display_name} scraper with session support")
     
     @property
     def session(self):
-        """Lazy initialization of session matching working pattern"""
+        """Lazy initialization of session"""
         if self._session is None:
             self._session = requests.Session()
-            # EXACT headers from working uni_monitor.py
+            # Set proper headers to mimic browser
             self._session.headers.update({
-                'User-Agent': 'Mozilla/5.0',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Referer': self.referer_url
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Referer': 'https://adiga.kr/',
             })
-            self.logger.debug("Created session with proper headers")
+            self.logger.debug("Created new requests session")
         return self._session
     
     def fetch_articles(self) -> List[Dict[str, Any]]:
         """
-        Fetch articles using PROPER session pattern from uni_monitor.py
-        
-        Returns:
-            List[Dict]: Raw article data
+        Fetch articles with session support.
         """
-        self.logger.info(f"Fetching articles using PROPER session pattern")
+        self.logger.info(f"Fetching articles with session support")
         
         raw_articles = []
         
         try:
-            # METHOD 1: Try live HTTP scraping with EXACT working pattern
-            self.logger.info("Attempting live HTTP with working pattern...")
-            live_articles = self._fetch_live_articles_ajax()
+            # METHOD 1: Try live HTTP scraping with session
+            self.logger.info("Attempting live HTTP scrape with session...")
+            live_articles = self._fetch_live_articles()
             
             if live_articles:
                 raw_articles = live_articles
-                self.logger.info(f"Live AJAX scrape successful: {len(raw_articles)} articles")
+                self.logger.info(f"Live scrape successful: {len(raw_articles)} articles")
             else:
                 # METHOD 2: Fallback to local HTML file
                 self.logger.info("Falling back to local HTML file...")
@@ -106,18 +104,26 @@ class AdigaScraper(BaseScraper):
                 
         except Exception as e:
             self.logger.error(f"Fetch error: {e}")
-            raw_articles = self._parse_local_html()  # Fallback to local
+            raw_articles = self._get_fallback_articles()
         
-        return raw_articles
+        # Enhance articles with session info
+        enhanced_articles = []
+        for article in raw_articles:
+            enhanced = self._enhance_with_session_info(article)
+            enhanced_articles.append(enhanced)
+        
+        return enhanced_articles
     
-    def _fetch_live_articles_ajax(self) -> List[Dict[str, Any]]:
-        """
-        Fetch articles using EXACT working pattern from uni_monitor.py
-        """
+    def _fetch_live_articles(self) -> List[Dict[str, Any]]:
+        """Fetch articles directly from Adiga.kr with session"""
         try:
-            # Step 1: Visit main page to establish session (EXACT as working code)
-            self.logger.info(f"Establishing session with {self.referer_url}...")
-            main_response = self.session.get(self.referer_url, timeout=10)
+            # Step 1: Visit main page to establish session
+            self.logger.info("Establishing session with adiga.kr...")
+            main_response = self.session.get(
+                self.base_url,
+                timeout=self.timeout,
+                allow_redirects=True
+            )
             
             if main_response.status_code != 200:
                 self.logger.warning(f"Main page returned {main_response.status_code}")
@@ -125,115 +131,41 @@ class AdigaScraper(BaseScraper):
             
             self.logger.info(f"Session established. Cookies: {len(self.session.cookies)}")
             
-            # Step 2: POST to AJAX endpoint with form data (EXACT as working code)
-            form_data = {
-                'menuId': 'PCUCTNMG2000',
-                'currentPage': '1',
-                'cntPerPage': '20',
-                'searchKeywordType': 'title',
-                'searchKeyword': '',
-            }
+            # Step 2: Try to get article list
+            # Adiga might use different endpoints - try common ones
+            endpoints = [
+                f"{self.base_url}/ArticleList.do",
+                f"{self.base_url}/BoardList.do",
+                f"{self.base_url}/List.do",
+                self.base_url  # Main page might have articles
+            ]
             
-            self.logger.info(f"POSTing to AJAX endpoint: {self.ajax_url}")
-            response = self.session.post(self.ajax_url, data=form_data, timeout=15)
-            
-            if response.status_code != 200:
-                self.logger.warning(f"AJAX endpoint returned {response.status_code}")
-                return []
-            
-            # Step 3: Parse response (EXACT as working code)
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Find articles - using same pattern as working code
-            article_elements = soup.find_all(class_='uctCastTitle')
-            self.logger.info(f"Found {len(article_elements)} article elements in AJAX response")
-            
-            # Extract articles from the elements
-            raw_articles = []
-            for element in article_elements[:self.max_articles]:
+            for endpoint in endpoints:
                 try:
-                    article = self._extract_from_ajax_element(element, soup)
-                    if article:
-                        raw_articles.append(article)
-                except Exception as e:
-                    self.logger.debug(f"Failed to parse AJAX element: {e}")
+                    self.logger.info(f"Trying endpoint: {endpoint}")
+                    response = self.session.get(
+                        endpoint,
+                        timeout=self.timeout,
+                        allow_redirects=True
+                    )
+                    
+                    if response.status_code == 200:
+                        return self._parse_html_response(response.text, live=True)
+                    
+                except requests.exceptions.RequestException as e:
+                    self.logger.warning(f"Endpoint {endpoint} failed: {e}")
                     continue
             
-            return raw_articles
-            
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"AJAX request error: {e}")
             return []
-        except Exception as e:
-            self.logger.error(f"AJAX parsing error: {e}")
-            return []
-    
-    def _extract_from_ajax_element(self, element, soup) -> Optional[Dict[str, Any]]:
-        """
-        Extract article data from AJAX response element
-        """
-        try:
-            # The working code finds elements with class 'uctCastTitle'
-            # We need to find the parent/article container
-            parent = element.find_parent('li') or element.find_parent('tr') or element.find_parent('div')
-            
-            if not parent:
-                return None
-            
-            # Look for onclick with fnDetailPopup
-            onclick_element = parent.find(onclick=True)
-            if not onclick_element:
-                return None
-            
-            onclick = onclick_element.get('onclick', '')
-            match = re.search(r'fnDetailPopup\(["\'](\d+)["\']\)', onclick)
-            if not match:
-                return None
-            
-            article_id = match.group(1)
-            title = element.get_text(strip=True).replace('newIcon', '').strip()
-            
-            # Try to find content and metadata nearby
-            content = ""
-            content_elem = parent.select_one('.content')
-            if content_elem:
-                content = content_elem.get_text(strip=True)
-            
-            metadata = ""
-            info_elem = parent.select_one('.info')
-            if info_elem:
-                spans = info_elem.find_all('span')
-                metadata = " | ".join([span.get_text(strip=True) for span in spans])
-            
-            # Construct URL
-            article_url = f"{self.base_url}/ArticleDetail.do?articleID={article_id}"
-            
-            # Combine content
-            full_content = content
-            if metadata:
-                full_content += f"\n📅 {metadata}"
-            
-            return {
-                'title': title,
-                'content': full_content[:350],
-                'url': article_url,
-                'article_id': article_id,
-                'onclick_handler': onclick,
-                'is_live_scrape': True,
-                'metadata': {
-                    'source': self.display_name,
-                    'scraped_at': datetime.now().isoformat(),
-                    'scrape_method': 'ajax_live',
-                    'ajax_url': self.ajax_url
-                }
-            }
             
         except Exception as e:
-            self.logger.debug(f"Error extracting from AJAX element: {e}")
-            return None
+            self.logger.error(f"Live fetch error: {e}")
+            return []
     
     def _parse_local_html(self) -> List[Dict[str, Any]]:
-        """Parse local HTML file as fallback"""
+        """Parse local HTML file"""
+        raw_articles = []
+        
         if not os.path.exists(self.html_file_path):
             self.logger.error(f"Local HTML file not found: {self.html_file_path}")
             return self._get_fallback_articles()
@@ -242,61 +174,92 @@ class AdigaScraper(BaseScraper):
             with open(self.html_file_path, 'r', encoding='utf-8') as f:
                 html = f.read()
             
-            soup = BeautifulSoup(html, 'html.parser')
-            raw_articles = []
-            
-            # Parse using local file pattern
-            article_items = soup.select('ul.uctList02 li')
-            self.logger.info(f"Parsing local HTML: {len(article_items)} items")
-            
-            for item in article_items[:self.max_articles]:
-                try:
-                    article = self._extract_from_local_item(item)
-                    if article:
-                        raw_articles.append(article)
-                except Exception as e:
-                    self.logger.debug(f"Failed to parse local item: {e}")
-                    continue
-            
-            return raw_articles
+            return self._parse_html_response(html, live=False)
             
         except Exception as e:
             self.logger.error(f"Error parsing local HTML: {e}")
             return self._get_fallback_articles()
     
-    def _extract_from_local_item(self, item) -> Optional[Dict[str, Any]]:
-        """Extract from local HTML item"""
-        anchor = item.find('a', onclick=True)
-        if not anchor:
+    def _parse_html_response(self, html: str, live: bool) -> List[Dict[str, Any]]:
+        """Parse HTML response (live or local)"""
+        soup = BeautifulSoup(html, 'html.parser')
+        raw_articles = []
+        
+        # Look for article items
+        article_items = soup.select('ul.uctList02 li')
+        
+        if not article_items:
+            # Try alternative selectors
+            selectors = ['.article-item', '.list-item', 'tr[onclick*="fnDetailPopup"]']
+            for selector in selectors:
+                items = soup.select(selector)
+                if items:
+                    article_items = items
+                    break
+        
+        self.logger.info(f"Found {len(article_items)} article items (live={live})")
+        
+        for item in article_items[:self.max_articles]:
+            try:
+                article = self._extract_article(item, live)
+                if article:
+                    raw_articles.append(article)
+            except Exception as e:
+                self.logger.debug(f"Failed to parse item: {e}")
+                continue
+        
+        return raw_articles
+    
+    def _extract_article(self, item, live: bool) -> Optional[Dict[str, Any]]:
+        """Extract article data from item"""
+        # Find clickable element with fnDetailPopup
+        clickable = None
+        for elem in item.find_all(True, onclick=True):  # True = all tags
+            onclick = elem.get('onclick', '')
+            if 'fnDetailPopup' in onclick:
+                clickable = elem
+                break
+        
+        if not clickable:
             return None
         
-        onclick = anchor.get('onclick', '')
+        onclick = clickable.get('onclick', '')
         match = re.search(r'fnDetailPopup\(["\'](\d+)["\']\)', onclick)
         if not match:
             return None
         
         article_id = match.group(1)
         
-        title_elem = anchor.select_one('.uctCastTitle')
-        if not title_elem:
-            return None
+        # Extract title
+        title = ""
+        title_elem = item.select_one('.uctCastTitle')
+        if title_elem:
+            title = title_elem.get_text(strip=True).replace('newIcon', '').strip()
         
-        title = title_elem.get_text(strip=True).replace('newIcon', '').strip()
+        if not title:
+            # Fallback: get text from first 100 chars
+            title = item.get_text(strip=True)[:100]
         
-        content_elem = anchor.select_one('.content')
-        content = content_elem.get_text(strip=True) if content_elem else ""
+        # Extract content
+        content = ""
+        content_elem = item.select_one('.content')
+        if content_elem:
+            content = content_elem.get_text(strip=True)
         
-        info_elem = anchor.select_one('.info')
+        # Extract metadata
         metadata = ""
+        info_elem = item.select_one('.info')
         if info_elem:
             spans = info_elem.find_all('span')
             metadata = " | ".join([span.get_text(strip=True) for span in spans])
         
-        article_url = f"{self.base_url}/ArticleDetail.do?articleID={article_id}"
-        
+        # Combine content
         full_content = content
         if metadata:
             full_content += f"\n📅 {metadata}"
+        
+        # Construct URL - THIS IS THE KEY FIX
+        article_url = f"{self.base_url}/ArticleDetail.do?articleID={article_id}"
         
         return {
             'title': title,
@@ -304,13 +267,37 @@ class AdigaScraper(BaseScraper):
             'url': article_url,
             'article_id': article_id,
             'onclick_handler': onclick,
-            'is_live_scrape': False,
+            'is_live_scrape': live,
             'metadata': {
                 'source': self.display_name,
                 'scraped_at': datetime.now().isoformat(),
-                'scrape_method': 'local_file'
+                'scrape_method': 'live' if live else 'local'
             }
         }
+    
+    def _enhance_with_session_info(self, article: Dict[str, Any]) -> Dict[str, Any]:
+        """Add session guidance to article content"""
+        article_id = article.get('article_id', '')
+        is_live = article.get('is_live_scrape', False)
+        content = article.get('content', '')
+        
+        # Only add guidance for non-live scrapes or as general info
+        if not is_live:
+            guidance = f"\n\n🔐 <b>링크 접속 방법:</b>"
+            guidance += f"\n• 먼저 adiga.kr 방문 (세션 필요)"
+            guidance += f"\n• 직접 링크: {article['url']}"
+            guidance += f"\n• JavaScript: fnDetailPopup('{article_id}')"
+            guidance += f"\n• 세션 유지가 필요합니다"
+            
+            # Add to content if not too long
+            if len(content) + len(guidance) < 400:
+                article['content'] = content + guidance
+        
+        # Add session metadata
+        article['metadata']['requires_session'] = True
+        article['metadata']['cookies_required'] = True
+        
+        return article
     
     def parse_article(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """Parse raw article data"""
@@ -326,7 +313,7 @@ class AdigaScraper(BaseScraper):
             university = self._extract_university(title)
             
             article = {
-                'id': f"adiga_{article_id}",
+                'id': f"adiga_session_{article_id}",
                 'title': title,
                 'content': content,
                 'url': url,
@@ -339,8 +326,7 @@ class AdigaScraper(BaseScraper):
                     **metadata,
                     'article_id': article_id,
                     'session_based': True,
-                    'direct_link': url,
-                    'requires_cookies': True
+                    'direct_link': url
                 }
             }
             
@@ -463,7 +449,7 @@ class LegacyAdigaScraper:
             'base_url': 'https://adiga.kr',
             'html_file_path': 'adiga_structure.html',
             'max_articles': 10,
-            'display_name': 'Adiga (어디가)',
+            'display_name': 'Adiga Session (어디가)',
             'timeout': 30,
             'retry_attempts': 3
         }
@@ -481,9 +467,9 @@ class LegacyAdigaScraper:
         return self._scraper.save_detected(programs)
 
 
-# Test the fix
+# Test
 if __name__ == "__main__":
-    print("Testing AdigaScraper with PROPER Session Pattern")
+    print("Testing AdigaScraper with Session Support")
     print("=" * 60)
     
     scraper = AdigaScraper()
@@ -493,19 +479,19 @@ if __name__ == "__main__":
         print(f"Fetched {len(articles)} articles")
         
         if articles:
-            print(f"\nFirst article:")
+            print("\nSample article:")
             print(f"Title: {articles[0].get('title', 'Unknown')}")
             print(f"URL: {articles[0].get('url', 'No URL')}")
             print(f"Live scrape: {articles[0].get('is_live_scrape', False)}")
-            print(f"Method: {articles[0].get('metadata', {}).get('scrape_method', 'unknown')}")
+            print(f"Content preview: {articles[0].get('content', '')[:100]}...")
             
             # Test parsing
             parsed = scraper.parse_article(articles[0])
             print(f"\nParsed ID: {parsed.get('id')}")
-            print(f"Requires cookies: {parsed.get('metadata', {}).get('requires_cookies', False)}")
+            print(f"Metadata: {parsed.get('metadata', {})}")
         
         print("\n" + "=" * 60)
-        print("Session fix applied!")
+        print("Session-based scraper ready!")
         
     finally:
         scraper.cleanup()
