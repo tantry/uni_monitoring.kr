@@ -1,6 +1,6 @@
 telegram:
   bot_token: "8537135583:AAFyI8788KM7CpAs5YNH6kdQnCuQ8bM2gec"
-  chat_id: "440747849"
+  chat_id: "-1002365084090"
 database:
   path: "data/state.db"
 logging:
