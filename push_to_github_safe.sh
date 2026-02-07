@@ -71,6 +71,7 @@ esac
 echo ""
 echo "3. ✅ STAGED CHANGES:"
 echo "-------------------"
+echo "   (Press 'q' to continue if output is paused)"
 git diff --cached --name-status
 if [ $? -ne 0 ]; then
     echo "   No changes staged"
