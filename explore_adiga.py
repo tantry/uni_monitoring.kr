@@ -1,179 +1,137 @@
+#!/usr/bin/env python3
+"""
+Manual exploration of Adiga.kr structure
+"""
 import requests
 from bs4 import BeautifulSoup
 import re
 
-BASE_URL = "https://www.adiga.kr"
-
-def explore_menu():
-    """Explore Adiga's menu structure."""
-    print("Exploring Adiga website structure...\n")
+def explore_adiga():
+    print("=== Manual Adiga.kr Exploration ===")
     
-    # Try to find sitemap or main page
-    urls_to_check = [
-        "https://www.adiga.kr",
-        "https://www.adiga.kr/sitemap.xml",
-        "https://www.adiga.kr/main.do",
-        "https://www.adiga.kr/index.do",
-    ]
+    base_url = "https://www.adiga.kr"
+    desktop_url = f"{base_url}/man/inf/mainView.do?menuId=PCMANINF1000"
     
-    for url in urls_to_check:
-        print(f"Checking: {url}")
-        try:
-            response = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                # Look for menu items
-                menu_items = soup.find_all(['a', 'li'], class_=re.compile(r'menu|nav|tab', re.I))
-                print(f"  Found {len(menu_items)} potential menu items")
-                
-                # Look for links containing keywords
-                keywords = ["대학", "입학", "모집", "공지", "추가", "입시", "announce", "notice", "admission"]
-                for keyword in keywords:
-                    links = soup.find_all('a', string=re.compile(keyword, re.I))
-                    if links:
-                        print(f"  Links with '{keyword}':")
-                        for link in links[:3]:  # Just show 3
-                            href = link.get('href', '')
-                            if href and not href.startswith('javascript'):
-                                full_url = href if href.startswith('http') else BASE_URL + href
-                                print(f"    - {link.get_text(strip=True)[:30]} -> {full_url[:50]}...")
-                print()
-                
-        except Exception as e:
-            print(f"  Error: {e}")
-
-def search_adiga_for_keywords():
-    """Search Adiga for relevant keywords."""
-    print("\n" + "="*60)
-    print("SEARCHING FOR KEYWORDS IN ADIGA:")
-    print("="*60)
+    # Create session
+    session = requests.Session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    })
     
-    # Test search on Adiga
-    search_keywords = ["추가모집", "입시공고", "대학공지", "입학안내"]
+    # Get main page
+    print(f"\n1. Fetching main desktop page: {desktop_url}")
+    response = session.get(desktop_url)
+    print(f"   Status: {response.status_code}, Size: {len(response.content)} bytes")
     
-    for keyword in search_keywords:
-        encoded_keyword = requests.utils.quote(keyword)
-        search_url = f"https://www.adiga.kr/search.do?searchKeyword={encoded_keyword}"
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Find all links
+    all_links = soup.find_all('a')
+    print(f"\n2. Total links found: {len(all_links)}")
+    
+    # Categorize links
+    categories = {
+        'menu_id_links': [],
+        'article_links': [],
+        'admission_links': [],
+        'other_links': []
+    }
+    
+    admission_keywords = ['입학', '모집', '공고', '전형', '원서', '모집요강']
+    
+    for link in all_links:
+        href = link.get('href', '')
+        text = link.get_text(strip=True)
         
-        print(f"\nSearching for '{keyword}':")
-        print(f"  URL: {search_url}")
-        try:
-            response = requests.get(search_url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                # Look for result items
-                results = soup.find_all(['a', 'div'], class_=re.compile(r'result|item|list', re.I))
-                print(f"  Found {len(results)} potential result items")
-                
-                # Extract links
-                links = soup.find_all('a', href=True)
-                relevant_links = []
-                for link in links:
-                    href = link.get('href', '')
-                    text = link.get_text(strip=True).lower()
-                    if keyword.lower() in text or '공고' in text or '모집' in text:
-                        if href and not href.startswith('javascript'):
-                            full_url = href if href.startswith('http') else BASE_URL + href
-                            relevant_links.append((text[:40], full_url))
-                
-                if relevant_links:
-                    print(f"  Relevant links found:")
-                    for text, url in relevant_links[:3]:  # Just show 3
-                        print(f"    - {text}...")
-                        print(f"      -> {url}")
-                else:
-                    print(f"  No obvious relevant links found")
-                    
-        except Exception as e:
-            print(f"  Search error: {e}")
-
-def test_potential_urls():
-    """Test some potential URLs we already know about."""
-    print("\n" + "="*60)
-    print("TESTING KNOWN POTENTIAL URLS:")
-    print("="*60)
+        if not href:
+            continue
+        
+        # Categorize
+        if 'menuId=' in href:
+            categories['menu_id_links'].append((text, href))
+        elif 'Article' in href:
+            categories['article_links'].append((text, href))
+        elif any(keyword in text for keyword in admission_keywords):
+            categories['admission_links'].append((text, href))
+        elif text and len(text) > 3:
+            categories['other_links'].append((text, href))
     
-    urls_to_test = [
-        ("University Search", "https://www.adiga.kr/man/inf/mainView.do?menuId=PCMANINF1000"),
-        ("University View", "https://www.adiga.kr/ucp/uvt/uni/univView.do?menuId=PCUVTINF2000"),
-        ("News View (current)", "https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"),
+    # Print categories
+    print("\n3. Link Categories:")
+    print(f"   - Menu ID links: {len(categories['menu_id_links'])}")
+    print(f"   - Article links: {len(categories['article_links'])}")
+    print(f"   - Admission links: {len(categories['admission_links'])}")
+    print(f"   - Other links: {len(categories['other_links'])}")
+    
+    # Show admission links
+    if categories['admission_links']:
+        print("\n4. Admission-related links found:")
+        for text, href in categories['admission_links'][:10]:
+            print(f"   - {text[:50]}... -> {href[:80]}")
+    
+    # Show menu ID links
+    print("\n5. Menu ID links (first 20):")
+    for i, (text, href) in enumerate(categories['menu_id_links'][:20]):
+        print(f"   {i+1:2d}. {text[:40]:40} -> {href[:60]}")
+    
+    # Try to find announcement/notice sections
+    print("\n6. Searching for announcement sections...")
+    
+    # Look for common announcement patterns
+    announcement_patterns = [
+        '공지사항', '새소식', '입학소식', '모집공고', 
+        '학사공지', '대학소식', '입학안내', '공지'
     ]
     
-    for name, url in urls_to_test:
-        print(f"\nTesting: {name}")
-        print(f"  URL: {url}")
+    for pattern in announcement_patterns:
+        elements = soup.find_all(string=re.compile(pattern, re.I))
+        if elements:
+            print(f"   Found '{pattern}' in {len(elements)} places")
+            for elem in elements[:3]:
+                parent = elem.parent
+                print(f"     - Parent: {parent.name}, Text: {elem[:50]}...")
+    
+    # Look for board/list structures
+    print("\n7. Looking for board/list structures...")
+    
+    board_classes = ['board', 'list', 'news', 'notice', 'bbs', 'article']
+    for cls in board_classes:
+        elements = soup.find_all(class_=re.compile(cls, re.I))
+        if elements:
+            print(f"   Found {len(elements)} elements with class containing '{cls}'")
+    
+    # Save the HTML for manual inspection
+    with open('adiga_exploration.html', 'w', encoding='utf-8') as f:
+        f.write(response.text[:10000])
+    
+    print(f"\n8. Saved exploration to 'adiga_exploration.html'")
+    
+    # Test some promising menu IDs
+    print("\n9. Testing promising menu IDs...")
+    
+    promising_menus = [
+        ('PCMANINF2000', '공지사항'),
+        ('PCMANINF3000', '새소식'),
+        ('PCUVTINF2000', '대학정보'),
+        ('PCCLSINF2000', '학과정보'),
+    ]
+    
+    for menu_id, description in promising_menus:
+        test_url = f"{base_url}/man/inf/mainView.do?menuId={menu_id}"
         try:
-            response = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
-            print(f"  Status: {response.status_code}")
+            test_resp = session.get(test_url, timeout=10)
+            print(f"   {menu_id} ({description}): {test_resp.status_code}, {len(test_resp.content)} bytes")
             
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                # Check for keywords in page
-                content = soup.get_text()
-                keywords = ["추가모집", "국립대", "공고", "모집", "입학"]
-                found_keywords = []
-                for kw in keywords:
-                    if kw in content:
-                        found_keywords.append(kw)
-                
-                if found_keywords:
-                    print(f"  Found keywords: {', '.join(found_keywords)}")
-                
-                # Check page title
-                title = soup.find('title')
-                if title:
-                    print(f"  Page title: {title.get_text(strip=True)[:50]}...")
-                
-                # Estimate content size
-                print(f"  Content size: {len(content)} characters")
-                
-                # Look for list/table structures
-                lists = soup.find_all(['ul', 'ol', 'table'])
-                print(f"  Found {len(lists)} list/table elements")
+            # Check for admission content
+            test_soup = BeautifulSoup(test_resp.content, 'html.parser')
+            admission_count = len(test_soup.find_all(string=re.compile('|'.join(admission_keywords), re.I)))
+            if admission_count > 0:
+                print(f"     Found {admission_count} admission-related terms")
                 
         except Exception as e:
-            print(f"  Error: {e}")
+            print(f"   {menu_id}: Error - {e}")
+    
+    return categories
 
 if __name__ == "__main__":
-    print("="*60)
-    print("ADIGA WEBSITE EXPLORATION TOOL")
-    print("="*60)
-    
-    explore_menu()
-    search_adiga_for_keywords()
-    test_potential_urls()
-    
-    print("\n" + "="*60)
-    print("MANUAL INVESTIGATION CHECKLIST:")
-    print("="*60)
-    print("""
-PLEASE CHECK THESE MANUALLY IN YOUR BROWSER:
-
-1. UNIVERSITY SEARCH PAGES:
-   - https://www.adiga.kr/man/inf/mainView.do?menuId=PCMANINF1000
-   - Can you search for specific universities here?
-   - Does it show individual university profiles?
-
-2. UNIVERSITY DETAIL PAGES:
-   - https://www.adiga.kr/ucp/uvt/uni/univView.do?menuId=PCUVTINF2000
-   - Try entering a university name (e.g., "경상국립대학교")
-   - Look for "공지사항" or "입학공고" tabs
-
-3. DIRECT SEARCHES:
-   - https://www.adiga.kr/search.do?searchKeyword=추가모집
-   - https://www.adiga.kr/search.do?searchKeyword=국립대+입학공고
-   - Do these show actual university announcements?
-
-4. LOOK FOR:
-   - Bulletin boards (/bbs/, /board/, /list.do)
-   - Notice sections ("공지사항", "새소식", "입학안내")
-   - University-specific pages
-
-WHEN YOU FIND A PROMISING PAGE:
-1. Right-click → "Inspect" on the announcement list
-2. Find the container (like <ul class="list"> or <div class="board">)
-3. Share the URL and container info with me
-    """)
+    explore_adiga()

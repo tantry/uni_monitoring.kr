@@ -1,0 +1,3244 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta charset="UTF-8">
+	<meta name="_csrf" content="32064231-d6b4-457c-9ae4-3c9639531f92">
+	<meta name="_csrf_header" content="X-CSRF-TOKEN">
+	
+	<meta property="og:title" content="대입정보포털" />
+	<meta property="og:type" content="website" />	
+	<meta property="og:url" content="https://adiga.kr" />
+	<meta property="og:image" content="https://adiga.kr/static/img/og_adiga.png" />	
+	<meta property="og:description" content="adiga, 대입정보포털, 어디가, 대학입학정보" />
+<!-- 	<meta name="google-site-verification" content="QN-LXaoviPTTzOiXUR2crIUH4XNJJWwUH5Jg4R3fhys" /> -->
+	<title>대입정보포털</title>
+	
+	<link rel="manifest" href="/adiga.manifest">
+	<link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+	<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">	
+	<link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon/favicon-96x96.png">	
+	<link rel="icon" type="image/png" sizes="144x144" href="/static/img/favicon/ms-icon-144x144.png">	
+	<link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon/android-icon-192x192.png">	
+	
+	<link rel="apple-touch-icon-precomposed" href="/static/img/favicon/apple-icon-114x114.png">	
+	<link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/static/img/favicon/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="/static/img/favicon/apple-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/static/img/favicon/apple-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="/static/img/favicon/apple-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/static/img/favicon/apple-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/static/img/favicon/apple-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-icon-180x180.png">
+	
+	<!-- css -->
+	<link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.min.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/swiper.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/default.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/common.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/sub.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/rMateChartH5.css" />
+	
+	<!-- Jquery -->
+	<script src="/static/js/jquery/jquery-3.7.0.min.js"></script>
+	<script src="/static/js/jquery/jquery-ui.min.js"></script>
+	<script src="/static/js/jquery/jquery.blockUI.min.js"></script>
+	<script src="/static/js/jquery/jquery.i18n.properties.min.js"></script>
+	<script src="/static/js/comm/swiper.js"></script>
+	<script src="/static/js/comm/common.js"></script>
+	<script src="/static/js/comm/devCommon.js?v=20250729"></script>
+	<script src="/static/js/guide/common.js?v=20241203"></script>	
+	<!-- <script src="/static/js/comm/scoSca.js"></script> -->
+	
+	<!-- axios -->
+	<script src="/static/js/axios/axios.min.js"></script>
+	<script src="/static/js/axios/axiosCommon.js"></script>
+	
+	<!-- 개별 script load -->
+	
+
+	<link rel="stylesheet" href="/static/css/main.css" />
+	<!-- <script src="/static/js/comm/swiper.js"></script>  -->
+	
+
+	
+	<!-- 개별 업무 script -->
+	
+    <script src="/static/js/rMateChartH5/rMateChartH5License.js"></script>
+    <script src="/static/js/rMateChartH5/rMateIntegrationH5.js"></script>
+    <script src="/static/js/rMateChartH5/theme.min.js"></script>	
+	<script src="/static/js/comm/app.js"></script>
+	<script src="/static/js/comm/scoSca.js"></script> 
+		
+	
+		<script >
+		$(document).ready(function(){
+			fnNewsList(); // 대입뉴스 조회
+			slideCall();
+			// 로그인 시 영역 변경
+			var user = "";
+			if(user != ""){
+				$(".beforeLogin").hide();
+				$(".afterLogin").show();
+				
+				$(".mainInfoCont01").addClass("loginInfoBox");
+				
+				/* 성적분석/진로정보 기본 영역 설정 */
+				fnAnlsJobAreaSetting();
+
+				slideCall();
+			}
+		}); /* JH Code */
+			
+			
+			/* input 생성 및 form add 함수 */
+			function fnMakeHiddInputFrmAdd(formId, inputName, inputValue){
+				$('#'+formId).append($('<input>', {
+						type: 'hidden',
+						name: inputName,
+						value: inputValue 
+					})
+				);
+			}
+			
+			/* 게시글 상세페이지 이동 함수 */
+			function fnMoveDetail(type, detailSn, detailSn_2, detailSn_3){
+				//폼 초기화
+				$("#linkFrm").empty();	
+				
+				//csrf
+				var form = document.getElementById("linkFrm");
+				var mapInput = document.createElement("input");
+				mapInput.type = 'hidden';
+			    mapInput.name = '_csrf';
+			    mapInput.value = $("meta[name='_csrf']").attr("content");
+			    form.appendChild(mapInput);
+			    
+				switch(type) {
+					case 'notice':	//공지사항
+							// 조회수 증가 후 페이지이동
+							fnBoardInqCnt(detailSn, function(){
+								fnMakeHiddInputFrmAdd('linkFrm','prtlBbsId', detailSn);
+								fnMakeHiddInputFrmAdd('linkFrm','menuId', 'PCCCTPBF1000');
+								$('#linkFrm').attr("method","GET");
+								$('#linkFrm').attr("action","/cct/pbf/noticeDetail.do");
+								$('#linkFrm').submit();
+							});	
+						break;
+					case 'news':	//대입뉴스
+							// 조회수 증가 후 페이지이동
+							fnBoardInqCnt(detailSn, function(){
+								var formData = new FormData();
+								formData.append("prtlBbsId", detailSn);
+								fn_axios.post(
+									"/uct/nmg/enw/newsDetail.do"
+									, formData
+									, function(fragment) {
+										$('#newsDetail .popCont').replaceWith(fragment);
+										openPopup('newsDetail');
+									}
+								);
+							});	
+						break;
+					case 'archive':	//대입전략자료실
+							// 조회수 증가 후 페이지이동
+							fnBoardInqCnt(detailSn, function(){
+								var formData = new FormData();
+								formData.append("prtlBbsId", detailSn);
+								fn_axios.post(
+									"/uct/ces/archiveDetail.do"
+									, formData
+									, function(fragment){
+										$('#archiveDetail .popCont').replaceWith(fragment);
+										openPopup('archiveDetail');
+										
+										//대입전략자료실 > 상세 > 키워드 검색 클릭 이벤트 변경
+										$('#archiveDetail').find('ul.keyWords li a').each((i, e) => {
+											$(e).attr('onclick', '').unbind('click', 'fnSearchKeyword');	
+											$(e).click(function () {
+												fnMakeHiddInputFrmAdd('linkFrm','searchKey', 'searchkwrdCn');				//키워드 검색
+												fnMakeHiddInputFrmAdd('linkFrm','searchWord', $(e).text().substring(1));	//키워드 값
+												$('#linkFrm').attr("action","/uct/ces/archiveView.do?menuId=PCUCTCES1000");
+												$('#linkFrm').submit();
+											});
+										});
+										
+										//대입전략자료실 > 상세 > 키워드 슬라이드
+										new Swiper(".keywordsSlide", {
+											slidesPerView: "auto",
+											centeredSlides:false,
+											spaceBetween: 9,
+											pagination : false,
+											loop:false, 
+											slidesPerGroup : 2,
+											allowTouchMove: false,
+											navigation: {
+												nextEl: ".keySlideNext",
+												prevEl: ".keySlidePrev",
+											}
+										});
+									}
+								);
+							});	
+						break;
+					case 'univInfo':	//일반 - 대학정보 상세
+							fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);			//대학코드
+							fnMakeHiddInputFrmAdd('linkFrm','searchSyr',detailSn_2);	//검색년도
+							$('#linkFrm').attr("action","/ucp/uvt/uni/univDetail.do?menuId=PCUVTINF2000");
+							$('#linkFrm').submit();
+						break;
+					case 'univClsInfo': //일반 - 학과정보 상세
+							fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);		//대학코드
+							fnMakeHiddInputFrmAdd('linkFrm','searchSyr', detailSn_2);	//검색년도
+							fnMakeHiddInputFrmAdd('linkFrm','ruCd', detailSn_3);		//학과코드
+							$('#linkFrm').attr("action","/ucp/cls/uni/classUnivDetail.do?menuId=PCCLSINF2000");
+							$('#linkFrm').submit();
+						break;
+					case 'colInfo':	//전문 - 대학정보 상세
+							fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);			//대학코드
+							fnMakeHiddInputFrmAdd('linkFrm','searchSyr',detailSn_2);	//검색년도
+							$('#linkFrm').attr("action","/ucp/uvt/col/collDetail.do?menuId=PCUVTINF3000");
+							$('#linkFrm').submit();
+						break;
+					case 'colClsInfo': //전문 - 학과정보 상세
+						fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);		//대학코드
+						fnMakeHiddInputFrmAdd('linkFrm','searchSyr', detailSn_2);	//검색년도
+						fnMakeHiddInputFrmAdd('linkFrm','ruCd', detailSn_3);		//학과코드
+						$('#linkFrm').attr("action","/ucp/cls/col/classColDetail.do?menuId=PCCLSINF3000");
+						$('#linkFrm').submit();
+						break;
+					case 'jobInfo': //직업정보
+						fnMakeHiddInputFrmAdd('linkFrm','searchCrCd', detailSn);
+						$('#linkFrm').attr("action","/jbp/jnf/jobInfoDetail.do?menuId=PCJBPJNF2000");
+						$('#linkFrm').submit();
+						break;
+					case 'event': // 대학별 행사안내
+						fnMakeHiddInputFrmAdd('linkFrm','evntSn', detailSn);
+						$('#linkFrm').attr("action","/uct/gdf/univEventDetail.do?menuId=PCUCTGDF1000");
+						$('#linkFrm').submit();
+						break;
+					case 'qna': // Q&A
+						// 조회수 증가 후 페이지이동
+				        fnAnsBoardInqCnt(detailSn, function(){
+				        	fnMakeHiddInputFrmAdd('linkFrm','ansBbsId', detailSn);
+							$('#linkFrm').attr("action","/cct/fqr/qna/qnaDetail.do?menuId=PCCCTFQR2001");
+							$('#linkFrm').submit();
+				        });	
+						break;
+					case 'propse': // 제안 및 건의하기
+						// 조회수 증가 후 페이지이동
+				        fnAnsBoardInqCnt(detailSn, function(){
+				        	fnMakeHiddInputFrmAdd('linkFrm','ansBbsId', detailSn);
+							$('#linkFrm').attr("action","/mpg/apl/receptionHistDetail.do?menuId=PCMPGAPL3001");
+							$('#linkFrm').submit();
+				        });	
+						break;
+					case 'conse': // 상담내역
+						// 조회수 증가 후 페이지이동
+				        fnAnsBoardInqCnt(detailSn, function(){
+							fnMakeHiddInputFrmAdd('linkFrm','ansBbsId', detailSn);
+							$('#linkFrm').attr("action","/uve/oca/onlineConseDetail.do?menuId=PCUVEOCA1000");
+							$('#linkFrm').submit();
+				        });	
+						break;
+					case 'magazine': //대입정보 매거진
+						var openNewWindow = window.open("about:blank");
+						openNewWindow.location.href = detailSn;
+						break;
+					case 'adigaTV' : //어디가TV
+						if (!detailSn) {
+							return false;
+						}
+						var formData = new FormData();
+						formData.append("contsId", detailSn);
+						fn_axios.post(
+								"/uct/nmg/gtv/adigaTvDetail.do"
+								, formData
+								, function(fragment) {
+									$('#adigaTvDetail .popCont').replaceWith(fragment);
+									openPopup('adigaTvDetail');
+								}
+							);
+						break;
+				}
+			}
+			
+			/* 대입뉴스 조회 */
+			function fnNewsList(){
+				fnInfoCenterLinkChg("/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"); //대입주요자료 더보기 링크변경
+				
+		   		fn_axios.post(
+					"/man/inf/mainNewsLstAjax.do"
+					, ""
+					, function(fragment){
+						$('#newsList').replaceWith(fragment);
+						$("#newsList").css("display","block");
+					}
+				);
+			}
+			
+			/* 대입전략자료실 조회 */
+			function fnArchiveList(){
+				fnInfoCenterLinkChg("/uct/ces/archiveView.do?menuId=PCUCTCES1000"); //대입주요자료 더보기 링크변경
+				
+		   		fn_axios.post(
+					"/man/inf/mainArchiveLstAjax.do"
+					, ""
+					, function(fragment){
+						$('#archiveList').replaceWith(fragment);
+						$("#archiveList").css("display","block");
+					}
+				);
+			}
+			
+			/* 대입용어사전 조회 */
+			function fnLibList(){
+				fnInfoCenterLinkChg("/uct/asi/dct/glossaryView.do?menuId=PCUCTASI3100"); //대입주요자료 더보기 링크변경
+				$("#libList").css("display","block");
+			}
+			
+			/* 주요입시용어 조회 */
+			function fnTermList(){
+				fnInfoCenterLinkChg("/uct/asi/met/mainEtenTrmyView.do?menuId=PCUCTASI4100"); //대입주요자료 더보기 링크변경
+			}
+			
+			/* 대입정보매거진 조회 */
+			function fnMagazineList(){
+				fn_axios.post(
+						"/man/inf/mainMagazineLstAjax.do"
+						, ""
+						, function(fragment){
+							$('#magazineList').replaceWith(fragment);
+						}
+					);
+			}
+			
+			/* AdigaTv 조회 */
+			function fnAdigaTvList(){
+				fn_axios.post(
+   					"/man/inf/mainAdigaTvLstAjax.do"
+   					, ""
+   					, function(fragment){
+   						$('#adigaTvList').replaceWith(fragment);
+   					}
+   				);
+			}
+			
+			/* 로그인 영역 메뉴 선택함수 */
+			function fnLoginAreaMenu(type) {
+				switch (type) {
+					case 'admss':
+						fnAdmssUnivList('unv');
+						fnAdmssUnivList('col');
+						$('.tabIntab ul li a').removeClass('on');
+						$('.moCont01 .tabIntab ul li').eq(0).children('a').addClass('on');
+						break;
+					case 'univ':
+						fnInterestUnivList('unv');
+						fnInterestUnivList('col');
+						$('.tabIntab ul li a').removeClass('on');
+						$('.moCont02 .tabIntab ul li').eq(0).children('a').addClass('on');
+						break;
+					case 'job':
+						fnInterestJobList();
+						break;
+					case 'conse':
+						fnConseList();
+						break;
+					case 'reception':
+						fnReceptionList('pgm');
+						fnReceptionList('qna');
+						fnReceptionList('propse');
+						$('.tabIntab ul li a').removeClass('on');
+						$('.moCont05 .tabIntab ul li').eq(0).children('a').addClass('on');
+						break;
+					case 'schedule':
+						fnScheduleList();
+						break;
+				}
+			}
+			
+			/* 관심전형 상세 탭 조회 함수 */
+			function fnAdmssUnivList(type) {
+				switch (type) {
+					case 'unv':
+						fn_axios.post(
+							"/man/inf/mainAdmssUnivLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#admssUnivList').replaceWith(fragment);
+								$("#admssUnivList").css("display","block");
+							}
+						);
+						break;
+					case 'col':
+						fn_axios.post(
+							"/man/inf/mainAdmssColLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#admssColList').replaceWith(fragment);
+								$("#admssColList").css("display","none");
+							}
+						);
+						break;
+				}
+			}
+			
+			/* 관심대학 상세 탭 조회 함수 */
+			function fnInterestUnivList(type) {
+				switch (type) {
+					case 'unv':
+						fn_axios.post(
+							"/man/inf/mainUnivLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#interestUnivList').replaceWith(fragment);
+								$("#interestUnivList").css("display","block");
+							}
+						);
+						break;
+					case 'col':
+						fn_axios.post(
+							"/man/inf/mainColLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#interestColList').replaceWith(fragment);
+								$("#interestColList").css("display","none");
+							}
+						);
+						break;
+				}
+			}
+			
+			/* 관심진로 상세 탭 조회 함수 */
+			function fnInterestJobList(){
+				fn_axios.post(
+   					"/man/inf/mainJobLstAjax.do"
+   					, ""
+   					, function(fragment){
+   						$('#interestJobList').replaceWith(fragment);
+   						$("#interestJobList").css("display","block");
+   					}
+   				);
+			}
+			
+			/* 신청/접수 상세 탭 조회 함수 */
+			function fnReceptionList(type) {
+				switch (type) {
+					case 'pgm':
+						fn_axios.post(
+							"/man/inf/mainPgmLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#pgmList').replaceWith(fragment);
+								$("#pgmList").css("display","block");
+							}
+						);
+						break;
+					case 'qna':
+						fn_axios.post(
+							"/man/inf/mainQnaLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#qnaList').replaceWith(fragment);
+								$("#qnaList").css("display","none");
+							}
+						);
+						break;
+					case 'propse':
+						fn_axios.post(
+							"/man/inf/mainPropseLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#propseList').replaceWith(fragment);
+								$("#propseList").css("display","none");
+							}
+						);
+						break;
+				}
+			}
+			
+			/* 나의일정 조회 함수 */
+			function fnScheduleList(move = 0){
+
+				$('#searchMoveMonth').val(move);
+				
+				fn_axios.post(
+   					"/man/inf/mainScheduleLstAjax.do"
+   					, $("#scheduleFrm").serialize()
+   					, function(fragment){
+   						$('#scheduleList').replaceWith(fragment);
+   						$("#scheduleList").css("display","block");
+   					}
+   				);
+			}
+		  	
+			/* 상담내역 상세 탭 조회 함수 */
+			function fnConseList(){
+				fn_axios.post(
+   					"/man/inf/mainConseLstAjax.do"
+   					, ""
+   					, function(fragment){
+   						$('#conseList').replaceWith(fragment);
+   						$("#conseList").css("display","block");
+   					}
+   				);
+			}
+			
+			/* 진로정보 검색 함수 */
+			function fnSearchJobInfo() {
+				const searchType = $("#searchType").val();
+				
+				if(searchType === "K") {
+					if ($("#searchKeyword").val().length < 2) {
+						alert(i18nMessage('errors.code.invalid-parameter.minlength', '검색어', 2));
+						$("input#searchKeyword").focus();
+						return false;
+					}
+				}else if(searchType === "C"){
+					if ($("#searchAvgSal").val() == '' && $("#searchProspect").val() == '') {
+						alert(i18nMessage('errors.code.invalid-parameter.select.required', '검색조건'));
+						return false;
+					}
+				}else{
+					return false;
+				}
+				
+				$('#jobInfoFrm').attr("action","/jbp/jnf/jobInfoView.do?menuId=PCJBPJNF2000");
+				$("#jobInfoFrm").submit();
+			}
+			
+			/* 진로정보 selectBox 변경 함수 */
+			function fnJobTypeChange(_this, value, text1, text2){
+				fnSelTypeSet(_this, value); // select Box UI 작동
+				if(value === "K"){
+					$("#kArea").css("display",'flex');
+					$("#cArea").css("display",'none');
+				}else if(value === "C"){
+					$("#kArea").css("display",'none');
+					$("#cArea").css("display",'flex');
+				}
+			}
+			
+			/* 성적분석/진로정보 탭 이동 함수 */
+			function fnAnlsJobTab(_this){
+				var micIdx = $(_this).parents("li").index();
+				$(".micTitBox ul li").removeClass("on")
+				$(_this).parent("li").addClass("on")
+				$(".micTabCov > div").hide();
+				$(".micTabCov > div").eq(micIdx).show();
+				if($(_this).attr("id") === "anisTab"){
+					$("#left1Text").text("학생부,수능/모의고사 성적을 원하는 전형조건으로 분석해 드립니다.");
+				}else{
+					$("#left1Text").text("내 꿈에 더 가까운 직업정보를 확인하세요!");
+				}
+			}
+			
+			/* 성적분석/진로정보 탭 기본설정 함수 */
+			function fnAnlsJobDefault(type){
+				if(type === "jobInfoArea"){
+					//진로정보
+					$("#jobTab").trigger("click");
+					
+				}else if(type === "anlsInsertArea"){
+					//성적분석 등록
+					$("#anlsInsertArea").show();
+					$("#anlsGrpArea").hide();
+					$("#anlsTab").trigger("click");
+					
+				}else if(type === "anlsGrpArea"){
+					//성적분석 그래프
+					$("#anlsInsertArea").hide();
+					$("#anlsGrpArea").show();
+					$("#anlsTab").trigger("click");
+				}
+			}
+			
+			/* 성적분석/진로정보 기본 영역 설정 */
+			function fnAnlsJobAreaSetting() {
+				/* 성적분석/진로정보 기본 영역 설정 */
+				var anisInsertYn = "N"; //학생부 성적 등록여부
+				var emhsGraSeCd = "";
+				var userClsfCd = "";
+				var resultTab = "jobInfoArea";
+				switch (userClsfCd) {
+				case '1': // 학생
+					if(emhsGraSeCd == '10'){ //고3
+						if(anisInsertYn === "Y"){
+							resultTab ='anlsGrpArea'; //성적입력 O
+							fnAnlsGrpTab('1');
+						}else{
+							resultTab = 'anlsInsertArea'; //성적입력 X
+						}
+					}else{ //고3 제외
+						if(anisInsertYn === "Y"){
+							resultTab = 'anlsGrpArea'; //성적입력 O
+							fnAnlsGrpTab('1');
+						}else{
+							resultTab = 'jobInfoArea'; //성적입력 X			 
+							$("#anlsInsertArea").show();
+							$("#anlsGrpArea").hide();
+						}
+					}
+					break;
+				case '2': // 학부모
+					if(anisInsertYn === "Y"){
+						resultTab ='anlsGrpArea'; //성적입력 O
+						fnAnlsGrpTab('1');
+					}else{
+						resultTab = 'anlsInsertArea'; //성적입력 X
+					}
+					break;
+				case '3': // 기타
+					if(anisInsertYn === "Y"){
+						resultTab ='anlsGrpArea'; //성적입력 O
+						fnAnlsGrpTab('1');
+					}else{
+						resultTab = 'anlsInsertArea'; //성적입력 X
+					}
+					break;
+				}
+				
+				fnAnlsJobDefault(resultTab);
+			}
+			
+			/* 성적분석 상세 탭 클릭 함수 */
+			function fnAnlsGrpTab(type,_this){
+				$(_this).parent().children('li').removeClass('on');
+				$(_this).addClass('on');
+				if(type == '1'){
+					if(document.getElementById("semStdptGraph") != null){
+						fnSchAnlsLoad();
+					}
+					$("#semStdptGraph").css("display",'block');
+					$("#mxtrGraph").css('display','none');
+				}else{
+					fnChartMakeTwo(); // 수능 차트
+					$("#semStdptGraph").css("display",'none');
+					$("#mxtrGraph").css('display','block');
+				}
+			}
+			
+			/* 성적분석 수능 차트 생성 함수 */
+			function fnChartMakeTwo() {
+				let chartDataSet7 = [];
+				
+				if(document.getElementById("chart7")){
+					document.getElementById("chart7").destroy();
+				}
+				
+				fn_axios.post(
+	   					"/sco/cat/getMainScoCatProcChartDataAjax.do"
+	   					, ""
+	   					, function(data){
+							let chartLst = data.chartLst;
+							chartLst.forEach(function(el,index){
+								const spData = [el.instNm, el.mtstGrd];
+								chartDataSet7[index] = {"mxtrType":spData[0], "grd":spData[1]};
+							});
+			
+							let chartData7 = chartDataSet7;
+			
+							let layoutStr7 = 
+								'<rMateChart backgroundColor="0xFFFFFF" cornerRadius="12" borderStyle="none" fontSize="13.5">'
+								+'<NumberFormatter id="numFmt"/>' 
+								+'<Column2DChart>'
+									+'<horizontalAxis>'
+										+'<CategoryAxis id="hAxis" categoryField="mxtrType"/>'
+									+'</horizontalAxis>'
+									+'<verticalAxis>'
+										+'<LinearAxis id="vAxis" minimum="1" maximum="10" interval="1" baseAtZero="true" labelJsFunction="fn_linear_axis_label4"/>'
+									+'</verticalAxis>'
+									+'<series>'
+										+'<Column2DSeries yField="grd" labelPosition="outside" formatter="{numFmt}" displayName="등급" itemRenderer="SemiCircleColumnItemRenderer">'
+											+ '<fills>'
+												+ '<SolidColor color="#EE5B4D" alpha="0.8"/>'
+												+ '<SolidColor color="#009DA7" alpha="0.8"/>'
+												+ '<SolidColor color="#009DA7" alpha="0.8"/>'
+												+ '<SolidColor color="#009DA7" alpha="0.8"/>'
+												+ '<SolidColor color="#009DA7" alpha="0.8"/>'
+												+ '<SolidColor color="#009DA7" alpha="0.8"/>'
+												+ '<SolidColor color="#009DA7" alpha="0.8"/>'
+											+ '</fills>'
+											+'<showDataEffect>'
+												+'<SeriesInterpolate/>' 
+											+'</showDataEffect>'
+										+'</Column2DSeries>'
+									+'</series>'
+									+'<horizontalAxisRenderers>' 
+										+'<Axis2DRenderer axis="{hAxis}" fontSize="13.5" labelRotation="20" canDropLabels="false" labelAlign="center"/>'
+									+'</horizontalAxisRenderers>'
+									+'<verticalAxisRenderers>'
+										+'<Axis2DRenderer axis="{vAxis}" fontSize="13.5" visible="true"/>'
+									+'</verticalAxisRenderers>'
+								+'</Column2DChart>'
+							+'</rMateChart>';
+			
+					 		rMateChartH5.create("chart7", "mxtrGraph", "", "100%", "100%");
+							rMateChartH5.call("chart7", "setLayout", layoutStr7);
+							rMateChartH5.call("chart7", "setData", chartData7);	 
+				});
+			}
+			
+			/* 대입주요자료 더보기버튼 링크변경 함수 */
+			function fnInfoCenterLinkChg(url){
+				$("#infoCenterLink").attr("href",url);
+			}
+		</script>
+	
+
+</head>
+
+<body>
+	<div id="skipnavi">
+	    <a href="#bodyContent" class="h3">본문바로가기</a>
+	    <a href="#fltMenu" class="h3">퀵메뉴바로가기</a>
+	</div>
+	<div class="wrapper">
+		<div id="headerWrap">
+			<div id="header">
+				
+
+
+	<script>
+	
+	var aiChatViewYn = "Y";
+	//const regE = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/g
+	const regE = "";
+	
+		var g_offset = 0; // 더보기 할시 변동
+		var g_limit = 5; // 더보기 할시 변동
+		var sort = "$relevance";
+		var sortType = "desc";
+		let popValue = "01";
+		var entries = performance.getEntriesByType("navigation")[0];
+		if(entries.type === "reload") {
+		}
+		
+	//	var layerDiv = $('.layerAtcmp');
+		$(document).ready(function() {
+			let today = new Date();
+			let monthDate = today.getMonth()+1;
+			let dayDate = today.getDate();
+			let yearDate = today.getFullYear();
+			
+			let formatDate = yearDate+"-"+(("00" + monthDate.toString()).slice(-2))+"-"+(("00" + dayDate.toString()).slice(-2)); 
+			$('.favDate').text(formatDate + " 기준")
+			
+			//$('.btnFav').on('click', function() {
+				
+			      // 모든 버튼에서 on 클래스 제거
+			     // $('.btnFav').removeClass('on');
+			      // 클릭한 버튼에 on 클래스 추가
+			      $(this).addClass('on');
+			      popValue = $(this).val();
+			      
+			   //   if(popValue=="01"){
+			    	  fn_axios.get_search(
+								"/man/sch/populerSearch2.do",
+								function(res) {
+									var tag = "";
+									let objList = res.obj[0].list;
+									$(".populerList li").remove();
+										for (var i = 1; i <= objList.length; i++) {
+											tag += '<li>';
+											tag += '<a href=/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search='+objList[i-1][0]+' class=btnFavData><span class=no>'
+													+ i
+													+ '</span><span class=txt>' 
+													+ objList[i-1][0] + '</span></a>';
+													if (objList[i - 1][1] > 0) {
+														tag += '<i class=ico_goup><span class=hidden>상승</span></i>';
+													} else if (objList[i - 1][1] < 0) {
+														tag += '<i class=ico_godn><span class=hidden>하락</span></i>';
+													} else if (objList[i - 1][1] == 0) {
+														tag += '<i class=ico_goeq><span class=hidden>보합</span></i>';
+													} else {
+														tag += '<i class=ico_gonew><span class=hidden>new</span></i>';
+													} 
+											tag += '</li>';
+										}
+
+									$(".populerList").append(tag)
+									
+								var tag2 = "";
+									
+									$(".populerList2 li").remove();
+									
+										for (var i = 1; i <= res.popSubject[0].result.rows.length; i++) {
+											tag2 += '<li>';
+											tag2 += '<a href=/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search='+res.popSubject[0].result.rows[i-1].fields.RUNM+' class=btnFavData><span class=no>'
+													+ i
+													+ '</span><span class=txt>' 
+													+ res.popSubject[0].result.rows[i-1].fields.RUNM + '</span></a>';
+											tag2 += '</li>';
+										}
+
+									$(".populerList2").append(tag2)	
+									
+								}, {
+									params : {
+									}
+								});
+			  /*     }else{
+			    	  fn_axios
+						.get_search(
+								"/man/sch/populerSearch2.do",
+								function(res) {
+									var tag2 = "";
+									
+									$(".populerList2 li").remove();
+									
+										for (var i = 1; i <= res.popSubject[0].result.rows.length; i++) {
+											tag2 += '<li>';
+											tag2 += '<a href=/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search='+res.popSubject[0].result.rows[i-1].fields.RUNM+' class=btnFavData><span class=no>'
+													+ i
+													+ '</span><span class=txt>' 
+													+ res.popSubject[0].result.rows[i-1].fields.RUNM + '</span></a>';
+											tag2 += '</li>';
+										}
+
+									$(".populerList2").append(tag2)
+								}, {
+									params : {
+									}
+								});
+			     } */
+			      
+			      
+			    	 
+			 //   });
+			
+			
+			//var layerDiv = $("#layerAtcmp");
+			
+			document.addEventListener("click", function(event){
+			
+				if(!$(event.target).closest("#layerAtcmp").length && !$(event.target).is("#layerAtcmp")
+						&& !$(event.target).is("#autoComplet") && !$(event.target).is(".btnDelData")){
+					//layerDiv.style.display = "none";
+					$("#layerAtcmp").hide();
+				}
+			})
+		})
+		
+		
+		//자동완성 호출
+		function autoComplete(e){
+			
+			$("#layerAtcmp").css({ 
+		       "display": "flex", 
+		       "z-index": "4",
+		       "left": "50%"
+		   }); 
+			let recentSearches = getRecentSearches().reverse();
+			
+			if(window.event.keyCode==13){
+				addRecentTotalSearch()
+			}
+			
+			var search = document.getElementById('autoComplet').value;
+			search = search.replaceAll(regE,"");
+			var autoList = $("#layerAtcmpAutoComp");
+			if(search === null || search === undefined || search.trim() === ""){
+				
+				$('.layerAtcmp').addClass('_show');
+				
+				$('.layerAtcmpAutoComp').css({
+					"display": "none"
+				});
+				$('.layerAtcmpRecent').css({
+					"display": "block"
+				});
+				$('.layerAtcmpFavorite').css({
+					"display": "block"
+				});
+				$('.layerAtcmpAiBnr').css({
+					"display": "block"
+				});
+				$('.layerCloseBtn').css({
+					"display": "block"
+				});
+				$('.layerAtcmp').css({ 
+				     "left": "50%" 
+				    }); 
+
+				
+				if(popValue == 01){
+				
+				fn_axios.get_search(
+						"/man/sch/populerSearch2.do",
+						function(res) {
+							var tag = "";
+							let objList = res.obj[0].list;
+	
+							$(".populerList li").remove();
+							for (var i = 1; i <= objList.length; i++) {
+								tag += '<li>';
+								tag += '<a href=/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search='+objList[i-1][0]+' class=btnFavData><span class=no>'
+										+ i
+										+ '</span><span class=txt>' 
+										+ objList[i-1][0] + '</span></a>';
+										if (objList[i - 1][1] > 0) {
+											tag += '<i class=ico_goup><span class=hidden>상승</span></i>';
+										} else if (objList[i - 1][1] < 0) {
+											tag += '<i class=ico_godn><span class=hidden>하락</span></i>';
+										} else if (objList[i - 1][1] == 0) {
+											tag += '<i class=ico_goeq><span class=hidden>보합</span></i>';
+										} else {
+											tag += '<i class=ico_gonew><span class=hidden>new</span></i>';
+										} 
+								tag += '</li>';
+							}
+
+							$(".populerList").append(tag)
+						}, {
+							params : {
+							}
+						});
+					
+				}
+				
+				if(recentSearches == null | recentSearches == undefined | recentSearches == "" | recentSearches == " "){
+					var tag = "";
+					$(".recentSearch li").remove();
+					$(".recentSearch div").remove();
+					tag = '<div class="noData">최근 검색 내역이 없어요.</div>'
+					$(".btnDelAll").hide();
+					
+				}else{
+					
+					var tag = "";
+					$(".recentSearch li").remove();
+					$(".recentSearch div").remove();
+					
+					$.each(recentSearches, function(i, recent_data) {
+						tag += '<li>';
+						tag += '<a href="/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search='+recent_data+'" class="btnRecData">'+recent_data+'</a>';
+						tag += '<button type="button" class="btnDelData" onclick="removeRecentSearch('+i+')"><span class="hidden">삭제</span></button>';
+						tag += '</li>';
+						
+					});
+					$(".recentSearch").append(tag)
+					
+					
+				}
+				
+				
+			}else{
+				
+				$('.layerAtcmpRecent').css({
+					"display": "none"
+				});
+				$('.layerAtcmpFavorite').css({
+					"display": "none"
+				});
+				$('.layerAtcmpAiBnr').css({
+					"display": "none"
+				});
+				$('.layerCloseBtn').css({
+					"display": "none"
+				});
+				
+				if(aiChatViewYn != "Y"){
+					  $('#layerAtcmp').css({    
+						     "left": "32%" 
+						  });  
+				}else{
+					$('.layerAtcmp').css({ 
+					     "left": "25%" 
+					    }); 
+				}
+				
+				$.ajax({
+					// 호출할 URL
+					url : "/man/sch/autoComplete.do",
+					type : 'GET',
+					datatype : 'json; charset:UTF-8',
+					data : {
+						search : search
+					},
+					success : function(res) {
+						
+						if(res.suggestions[0].length == 0){
+							$('.layerAtcmpAutoComp').css({
+								"display": "none"
+							});
+						}else{
+							$('.layerAtcmpAutoComp').css({
+								"display": "block"
+							});
+							var tag = "";
+							$("#autoList ul").remove();
+							tag = '<ul>';
+							$.each(res.suggestions[0], function(i, json_data) {
+									tag += autoCompleteBody(i, json_data);
+							});
+							tag += '</div>';
+							$("#autoList").append(tag)
+							$("#autoList").parents('.layerAtcmp').addClass('_show');
+							
+						}
+						
+					},// success
+					complete : function(data) {
+						// alert("에러발생");
+					},
+					error : function(xhr, status, error) {
+						// alert("에러발생");
+					}
+				}); // ajax end
+			
+			}
+		}
+	
+	//자동완성 그리기
+	var autoCompleteBody = function(count, json_data) {
+		
+		const keyword = $("#autoComplet").val()
+		
+		let firstKeyword = "";
+		let secondKeyword = "";
+		let splitKeyword = "";
+		
+	//	splitKeyword = JSON.stringify(json_data)
+		splitKeyword = Object.values(json_data)
+		firstKeyword = splitKeyword[0].split(';')
+		
+		let regex = new RegExp(keyword, "g");
+		let change_word = firstKeyword[0];
+		let replace_word = change_word.replace(regex, "<span class='hilite_fields'>" + keyword + "</span>");
+		
+		
+		var tag="";
+		tag += '<li>';
+		tag += '<a href=/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search='	+ encodeURIComponent(firstKeyword[0])+' class="btnRecData">'+replace_word+'</a>';
+		//tag += '<button type="button" class="btnDelData"><span class="hidden">삭제</span></button>';
+		if(firstKeyword[1] == '1'){
+			tag += '<span class="typeSrchOnly">'+firstKeyword[1].replace("1","대입정보")+'</span>';
+		} else if (firstKeyword[1] == '2'){
+			tag += '<span class="typeSrchOnly">'+firstKeyword[1].replace("2","대학정보")+'</span>';
+		} else if (firstKeyword[1] == '3'){
+			tag += '<span class="typeSrchOnly">'+firstKeyword[1].replace("3","전형정보")+'</span>';
+		} else if (firstKeyword[1] == '4'){
+			tag += '<span class="typeSrchOnly">'+firstKeyword[1].replace("4","학과정보")+'</span>';
+		} 
+		/*
+		else if (firstKeyword[1] == '5'){
+			tag += '<span class="typeSrchOnly">'+firstKeyword[1].replace("5","원숭이")+'</span>';
+		} 
+		*/
+		else {
+			tag += '<span class="typeSrchOnly"></span>';
+		}
+		
+		
+		tag += '</li>';
+		return tag;
+	}
+	
+	// 로컬 스토리지에서 최근 검색어 목록을 불러오는 함수
+    function getRecentSearches() {
+        const recentSearches = localStorage.getItem('recentSearches');
+        return recentSearches ? JSON.parse(recentSearches) : [];
+    }
+
+    // 로컬 스토리지에 최근 검색어 목록을 저장하는 함수
+    function saveRecentSearches(recentSearches) {
+        localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+    }
+
+	 // 최근 검색어 항목 삭제 함수
+    function removeRecentSearch(index) {
+        const recentSearches = getRecentSearches().reverse();
+        recentSearches.splice(index, 1);
+        saveRecentSearches(recentSearches);
+        autoComplete();
+        
+    }
+	
+	//최근 검색어 전체 삭제
+    function clearRecentSearches() {
+        const recentSearches = [];
+        saveRecentSearches(recentSearches);
+        autoComplete();
+    }
+    
+ // 검색어를 추가하고 목록을 업데이트하는 함수
+    function addRecentTotalSearch() {
+    	var search = document.getElementById('autoComplet').value;
+    	$("#loadingAction").show();
+	 if(search.trim() == "" || search == null ){
+		 alert("검색어를 입력해주세요");
+		 $("#loadingAction").hide();
+	 }else{
+    	location.href="/man/sch/searchView.do?menuId=PCMANSCH5001&checkMiss=1&search="+search.replaceAll("#","＃").replaceAll("&","＆").replaceAll("+", "＋");
+	 }
+    }
+	function fnLoginCheck(question){
+		if("" == ""){
+			alert('로그인이 필요한 서비스 입니다.\n로그인페이지로 이동합니다.');
+			location.href = "/mbs/log/mbsLogView.do?menuId=PCMBSLOG1000";		
+		}else{
+			fn_axios.post(
+				"/ais/rcd/cmn/selectAiPrvcAgreCheck.do"
+				, ""
+				, function(fragment){
+					if(fragment.aiPrvcAgreYn == "Y"){
+						fnMoveChatAI(question);
+					}else{
+						$("#aiRcdPopup").replaceWith(fragment);
+						$("#aiFrmCheck").prop("checked",false);
+						$("#aiRcdPop").addClass("on");
+						$("#aiRcdPop ._confirm").attr('onclick', "fnAiRcdAgre(fnMoveChatAI, '"+question+"');");
+					}
+				}
+			);
+		}
+	}
+	
+	function fnMoveChatAI(question){
+		/* let _name = "aisChtView";
+		window.open("/ais/cht/selectAisChtView.do?question="+question, target=_name, ""); */
+		
+		 // FormData 객체 생성
+	    var formData = new FormData();
+	    formData.append("question", question);
+	    
+	    // CSRF 토큰 추가
+	    formData.append("_csrf", $("meta[name='_csrf']").attr("content"));
+
+	    // 폼 생성
+	    var form = document.createElement("form");
+	    form.method = "POST";
+	    form.action = "/ais/cht/selectAisChtView.do";
+
+	    // FormData 객체의 데이터를 폼에 추가
+	    for (let [name, value] of formData) {
+	        var input = document.createElement("input");
+	        input.type = "hidden";
+	        input.name = name;
+	        input.value = value;
+	        form.appendChild(input);
+	    }
+
+	    // 폼을 문서에 추가
+	    document.body.appendChild(form);
+
+	    // 새 창 열기 설정
+	    let _name = "aisChtView";
+	    window.open("", _name, "");
+
+	    // 폼 타겟과 전송 설정
+	    form.target = _name;
+	    form.submit();
+
+	    // 폼 제거
+	    setTimeout(() => {
+	        document.body.removeChild(form);
+	        form.target = "_self";
+	    }, 100);
+		
+	}
+	</script>
+
+
+	<script>
+		$(document).ready(function() {
+			
+			var user = "";
+			if( user != "" ){
+				initSessionTime();
+			}
+		});
+	
+		var tid;
+		var sessionTime;
+		function initSessionTime(){
+			
+			if(tid){
+				clearInterval(tid);
+			}
+			
+			//tomcat session 초기화
+			fn_axios.get(
+				"/mbs/log/initSessionAjax.do"
+				, function(fragment){   
+					
+					//세션초기화
+					sessionTime = Number(fragment.sessionTime);
+// 					sessionTime = Number("62");
+					tid = setInterval("runTime()", 1000);
+				}
+			);
+		}
+	
+		function runTime(){
+			
+			//시간 카운트
+			sessionTime = sessionTime - 1;
+			var text = timeText(sessionTime);
+			$(".timeClass").text(text);
+			
+			//팝업창
+			if( $(".timePopupClass.on").length == 1){
+				$(".timeSecClass").text(text);
+			}
+			
+			if(sessionTime < 0){
+				//로그아웃
+				fnSessionLogout();
+			} else if(sessionTime < 60) {
+				//일분 카운트
+				lastOneMinute();
+			}
+		}
+	
+		function lastOneMinute(){
+			//마지막 1분 timeOutPopup.html
+			$(".timePopupClass").addClass("on");
+		}
+	
+		function fnSessionLogout(){
+			clearInterval(tid);
+			location.href = "/mbs/log/sessionLogout.do?menuId=PCMANINF1000";
+		}
+	
+		function timeText(sec) {
+	
+			var nMin=0;
+			var nSec=0;
+			
+			if( sec> 0) {
+				nMin = parseInt(sec/60);
+				nSec = sec%60;
+			} 
+			
+			var textMin = nMin;
+			var textSec = nSec;
+			if(nMin<10) textMin = "0"+nMin;
+			if(nSec<10) textSec = "0"+nSec;
+			
+			var textTime = "";
+			if (nMin > 0) {
+				textTime = ""+textMin+":"+textSec;
+			} else if ( nSec > 0 ) {
+				textTime = ""+textSec;
+			}
+			
+			return textTime;
+		}
+		
+		function fnLogout(){
+			clearInterval(tid);
+			location.href = "/mbs/log/logout.do?menuId=PCMANINF1000";
+		}
+		
+		function closeLayer(){
+			$('#layerAtcmp').css('display', 'none');
+		}
+	</script>
+	
+	<div class="headCont01">
+		<div class="hLogo">
+			<a href="/man/inf/mainView.do?menuId=PCMANINF1000"><img src="/static/img/adiga_logo.png" alt="로고 이미지"></a>
+		</div>
+		<div class="hSearch">
+		    <div class="hSearchBox">
+				<input type="text" class="XSSSafeInput" placeholder="검색어를 입력해주세요" title="헤더검색영역" onfocus="autoComplete()" onkeyup="autoComplete()" id="autoComplet" autocomplete="off">
+				
+					<button type="button" class="convAiBtn" onclick="fnLoginCheck(document.getElementById('autoComplet').value)" title="대화형 검색"></button><!-- ai 버튼 추가-->
+					<p class="hidden" id="mainBeta">&nbsp;</p>
+				
+				<a href="javascript:void(0)" onclick="addRecentTotalSearch()" ><img src="/static/img/head_src_icon.png" alt="검색 아이콘"></a>
+			</div>
+			<div class="layerAtcmp" id="layerAtcmp">
+					
+					
+					<div class="layerAtcmpAutoComp" style="width:315px; padding:24px;">
+						<div class="scrollCov">
+							<div class="dataList withIcon" id="autoList">
+								<!-- no-data -->
+								<!-- <div class="noData">최근 검색 내역이 없어요.</div> -->
+								<!--// no-data -->
+								<ul>
+								</ul>
+							</div>
+						</div>
+					</div>
+					<!-- 대화형 검색 배너 -->
+					
+						<div class="layerAtcmpAiBnr" onclick="fnLoginCheck('');">
+							<img src="/static/img/ai/img_chat_ai_banner.jpg" alt="어디가 대화형 검색 - 대학/진로에 대한 궁금증을 대화하듯 질문하세요! adiga 대화형 검색이 친절하게 답변해 드릴게요.">
+						</div>
+					
+					<!-- // 대화형 검색 배너 -->
+					<!-- 최근 검색어 -->
+					<div class="layerAtcmpRecent">
+						<div class="scrollCov">
+							<div class="recHeader">
+								<strong>최근 검색어</strong>
+								<button type="button" class="btnDelAll" onclick="clearRecentSearches()"><span>전체삭제</span></button>
+							</div>
+							<div class="dataList withIcon">
+								<!-- no-data -->
+								<!-- <div class="noData">최근 검색 내역이 없어요.</div> -->
+								<!--// no-data -->
+								<ul class="recentSearch">
+									
+								</ul>
+							</div>
+						</div>
+					</div>
+					<!--// 최근 검색어 -->
+					<!-- 인기 검색어 -->
+					<div class="layerAtcmpFavorite layerFavorite01">
+						<div class="favHeader">
+							<span class="favBtns">
+							<strong>인기 검색어</strong>
+								<!-- <button type="button" class="btnFav on" name="popButton" value="01"><span>인기 검색어</span></button> -->
+								<!-- <button type="button" class="btnFav" name="popButton" value="02"><span>인기학과</span></button> -->
+							</span>
+							<span class="favDate">
+							</span>
+						</div>
+						<div class="dataList">
+							<ul class="populerList">
+								
+							</ul>
+						</div>
+					</div>
+					<!--// 인기 검색어 -->
+					<!-- 인기학과 검색어 -->
+					<div class="layerAtcmpFavorite layerFavorite02">
+						<div class="favHeader">
+							<span class="favBtns">
+							<strong>인기학과</strong>
+								<!-- <button type="button" class="btnFav on" name="popButton" value="01"><span>인기</span></button> -->
+								<!-- <button type="button" class="btnFav" name="popButton" value="02"><span>인기학과</span></button> -->
+							</span>
+							<span class="favDate">
+							</span>
+						</div>
+						<div class="dataList">
+							<ul class="populerList2">
+								
+							</ul>
+						</div>
+					</div>
+					<!--// 인기학과 검색어 -->					
+					<!-- 닫기버튼 -->
+					<a href="#" class="layerCloseBtn"><img src="/static/img/ai/icon_close_popup.png" onclick="closeLayer()" alt="닫기 버튼"></a>
+					<!-- // 닫기버튼 -->
+					
+				</div><!--//.layerAtcmp-->
+		</div>
+		
+		<div class="hLogFn">
+			<ul>
+				<li class="timeClass" style="width: 38px; font-size:12px !important;"></li>
+				<!-- <th:block th:if="${#strings.isEmpty(session.user)}"> -->
+				
+					<li><a href="/mbs/log/mbsLogView.do?menuId=PCMBSLOG1000" class="body3">로그인</a></li>
+					<li class="fLine"><span></span></li>
+					<li><a href="/mbs/jdm/memberJoinView.do?menuId=PCMBSJDM1000" class="body3">회원가입</a></li>
+					<li class="fLine"><span></span></li>
+				
+				<!-- <th:block th:if="${not #strings.isEmpty(session.user)}"> -->
+				
+				<li><a href="/cct/stp/sitemapView.do?menuId=PCCCTSTP1000" class="body3">사이트맵</a></li>
+			</ul>
+		</div>
+	</div>
+	
+		
+<link rel="stylesheet" type="text/css" href="/static/css/ai.css" />
+
+
+		
+<script type="text/javascript">
+     
+	$(document).ready(function() {
+		if(""==""){
+			$('#aiFloating').css('background-color', '#685dd1');
+			$('#aiFloating').css('max-width', '450px');
+			$('#aiFloating').hover(
+		        function(){
+		     	   	timeoutId = setTimeout(()=>{ $('.text').html('로그인하고<span class="aiBold"> 취향 맞춤 저격! adiga 추천 전형</span> 확인하세요!'); }, 0)
+		        },
+		        function(){
+		     	   	timeoutId = setTimeout(()=>{ $('.text').html('로그인하고<br/><span class="aiBold">adiga 추천 전형</span> 확인하세요!'); }, 0)
+		        }
+		    );
+		}else{
+			$('#aiFloating').css('width', "전형"=='직업'?'310px':'');
+			$('#aiFloating').css('background-color', '#005495');
+			$('#aiFloating').hover(
+				function(){
+					$('#aiFloating').css('width','');
+					timeoutId = setTimeout(()=>{ 
+				        let userName = '';
+				        
+				        if (userName.length > 5) {
+				            userName = userName.slice(0, 5) + '···';
+				            $('#aiFloating').css('width', '480px');
+				        }
+						$('.text').html(userName+'님에게 딱 맞는 <span class="aiBold">adiga 추천 전형</span>을 놓치지 마세요!'); }, 0);
+				},
+				function(){
+					timeoutId = setTimeout(()=>{
+						if("전형"=='직업'){
+							$('#aiFloating').css('width', '310px');
+		     	   			$('.text').html('<span class="aiBold">진로 선택</span>하셨나요?<br/><span class="aiBold">adiga 추천 직업</span>을 놓치지마세요!');
+						}else{
+							$('#aiFloating').css('width', '310px');
+		     	   			$('.text').html('대학 <span class="aiBold">어디가</span>세요?<br/><span class="aiBold">adiga 추천</span>으로 가세요!');
+						}
+					}, 0)
+		        }
+			);
+		}
+	});
+	
+
+    /* AI추천 개인정보 동의여부 체크 */
+	function fnAiPrvcAgre(){
+		fn_axios.post(
+			"/ais/rcd/cmn/selectAiPrvcAgreCheck.do"
+			, ''
+			, function(fragment){
+				//ai추천 약관동의
+// 				$("#aiPrvcAgreYn").val(fragment.aiPrvcAgreYn);
+// 				if(fragment.aiPrvcAgreYn == "Y"){
+					fnAIAdvice();
+// 				}else{
+// 					$("#aiRcdPopup").replaceWith(fragment);
+// 					$("#aiFrmCheck").prop("checked",false);
+// 					$("#aiRcdPop").addClass("on");
+// 					$("#aiRcdPop ._confirm").attr('onclick', "fnAiRcdAgre(fnAIAdvice);");
+// 				}
+			}
+		);
+	}
+      
+	/* AI추천 개인정보 동의 */
+	function fnAiRcdAgre(callback, ...args){
+		
+		if( $("#aiFrmCheck:checked").length == 0 ){
+			alert("약관 동의를 하지 않을 경우 서비스 이용이 불가합니다.\n동의 해 주세요.");
+			return false;
+		}
+		
+		const formData = new FormData();
+		formData.append("utztnTrmsCd", "60");
+		formData.append("trmsAgreYn", "Y");
+		
+		fn_axios.post(
+			"/mbs/jdm/updateTrmsAgre.do"
+			, formData
+			, function(fragment){ 
+				alert("동의 되었습니다.");
+				$("#aiRcdPop").removeClass("on");
+				
+				if(typeof callback === "function"){
+					callback(...args);
+				}
+				
+			}
+		);
+	}
+	
+	/* AI추천 대학 상세(새 탭) */
+	function fnAiUnivDetail(syr,unvCd) {
+		if(!unvCd){
+			return;
+		}
+		const formData = new FormData();
+		formData.append("menuId", "PCUVTINF2000");
+		formData.append("unvCd", unvCd);
+		formData.append("searchSyr", syr);
+		window.open("/ucp/uvt/uni/univDetail.do?"+new URLSearchParams(formData).toString(),"_blank");
+	}
+	
+	/* AI추천 학과 상세(새 탭) */
+	function fnAiDetail(strGrpNo,grpSn,syr,unvCd,ruCd) {
+		if(!unvCd){
+		    return;
+		}
+		
+		//AI추천 후 상세로 이동하게되면 만족도 좋아요로 판단
+		fnAiLog(strGrpNo,grpSn);
+		
+		const formData = new FormData();
+		formData.append("menuId", "PCCLSINF2000");
+		formData.append("unvCd", unvCd);
+		formData.append("ruCd", ruCd);
+		formData.append("searchSyr", syr);
+		window.open("/ucp/cls/uni/classUnivDetail.do?"+new URLSearchParams(formData).toString(),"_blank");
+	}
+
+	/* AI추천 전형 상세(새 탭) */
+	function fnAiPrcDetail(strGrpNo, grpSn, syr, unvCd, ruCd, ruSn, comScsbjtCd, slcnGroupCd, rcmtMmntCd, lclsfAftCd, slcnTypeCd, slcnCd){
+		
+		if (!unvCd || !comScsbjtCd) {
+			return;
+		}
+		
+		//AI추천 후 상세로 이동하게되면 만족도 좋아요로 판단
+		fnAiLog(strGrpNo, grpSn);
+		
+		const formData = new FormData();
+	
+		formData.append("menuId", "PCPRCINF2000");
+		formData.append("searchSyr", syr);
+		formData.append("unvCd", unvCd);
+	    formData.append("ruCd", ruCd);
+	    formData.append("ruSn", ruSn);
+	    formData.append("comScsbjtCd", comScsbjtCd);
+	    formData.append("slcnGroupCd", slcnGroupCd);
+	    formData.append("rcmtMmntCd", rcmtMmntCd);
+	    formData.append("lclsfAftCd", lclsfAftCd);
+	    formData.append("slcnTypeCd", slcnTypeCd);
+	    formData.append("slcnCd", slcnCd);
+	
+		var url = "/ucp/prc/uni/admssUnivDetail.do?" + new URLSearchParams(formData).toString();
+		//재외국민 외국인(정원외)
+		if (slcnCd == "09") {
+			url = "/ucp/prc/uni/admssUnivDetailFrgnrGnrl.do?" + new URLSearchParams(formData).toString();
+		}
+		window.open(url,"_blank");
+	}
+	
+	/* 통합학과 팝업호출(AI추천전용팝업) */
+	function fnAiCombinePop(syr, unvCd, ruCd) {
+		// 파라미터 세팅
+		$("#syr").val(syr);
+		$("#unvCd").val(unvCd);
+		$("#ruCd").val(ruCd);
+		
+		const formData = new FormData(document.getElementById('frm'));
+	          
+		fn_axios.post(
+	  			"/ucp/cls/uni/classUnivCombinePopup.do"
+	  			, formData
+	  			, function(fragment){
+	  				$('#conbine').replaceWith(fragment);
+	  			}
+	  			, {'showLoading' : true}
+	  	);
+		openPopup('courCombPop');
+	}
+	
+	/* AI추천 후 상세로 이동하게되면 만족도 좋아요로 판단 */
+	function fnAiLog(strGrpNo, grpSn){
+		
+		const formData = new FormData();
+		formData.append("strGrpNo", strGrpNo);
+    	formData.append("rcmdtnGroupSn", grpSn);
+    		
+    	fn_axios.post(
+			"/ais/rcd/cmn/aiLogSave.do"
+			, formData
+			, function(fragment){
+				
+			}
+		);	
+	}
+	
+</script>
+
+
+	
+<input type="hidden" id="aiMenuId" name="aiMenuId" value="PCMANINF1000" />
+
+<!-- 직업정보 -->
+
+
+<!-- 학과정보 -->
+
+
+<!-- 전형정보 -->
+
+
+<!-- 대학정보 -->
+
+
+<!-- 성적분석(수시) -->
+
+<!-- 성적분석(정시) -->
+
+
+<!-- ai약관동의팝업 -->
+<div class="mbs loginForm03">
+	<div id="aiRcdPop" class="modPopup termsClass">
+	    <div class="popupDim">딤영역</div>
+	    <div class="popupArea popup1Cont mdPop registerPopup">
+	        <div class="popupInMotion">
+	            <div class="popupContainer">
+	                <div class="popupContArea">             
+	                    <div class="popTitleBox">
+	                        <h1 class="popTitle">Adiga 대화형 개인정보수집 및 이용 동의</h1>
+	                        <button class="popCloseBtn" onclick="closePopup('aiRcdPop');">
+	                            <span class="hidden">닫기</span>
+	                        </button>
+	                    </div>
+	
+	                    <div class="popCont">
+	                        <!-- 팝업 컨텐츠 영역 -->
+	                        <div class="modDivision body1 reg">
+	                            <img src="/static/img/common/ico_nodata.png" alt="안내">
+	                            <p class="mT20 sclr01">더 좋은 서비스 제공을 위해 약관이 업데이트 되었습니다.</p>
+	                            <p class="tclr">업데이트된 약관 동의 후 이용해 주세요.</p>
+	                        </div>
+	
+	                        <div class="cptBxGry">
+	                            <div class="frmChoBox">
+	                                <div class="frmCheck">
+	                                    <input type="checkbox" id="aiFrmCheck">
+	                                    <label for="aiFrmCheck">이용약관에 동의합니다.</label>
+	                                </div>
+	                                <button type="button" class="btnToggle _close"><span class="hidden">닫기</span></button>
+	                            </div>
+	                            <div id="aiRcdPopup">
+								
+								</div>
+	                        </div>
+	                        <p class="body3 sclr02 bottomInfo">동의는 거부할수 있으며, 동의하지 않는 경우 서비스 이용이 불가합니다.</p>
+	                        <!-- //팝업 컨텐츠 영역 -->
+	                    </div>
+	                    <div class="popBtm">
+	                        <button type="button" class="btnCTA _cancel" onclick="closePopup('aiRcdPop');"><span>거부</span></button>
+	                        <button type="button" class="btnCTA _confirm" onclick="fnAiRcdAgre();"><span>동의</span></button>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+</div>
+
+
+	
+
+
+				<div class="headCont02">
+	<script>
+	//공통 메뉴/퀵메뉴 팝업 이벤트 제거
+	$(function () {
+		$(document).off("click", ".mainMenuBtn");
+		$(document).off("click", ".mainPopBtn");
+		$(document).off("click", ".quickCls");
+	});
+	
+	//메뉴 팝업
+	function fnMenuPopup(_this) {
+		if($('.mainMenuBtn').hasClass('on')) {
+			$('.mainMenuBtn, .menuPop').removeClass('on');
+		} else {
+	        fn_axios.get(
+                "/mnu/mnu/menuPopup.do"
+                , function (fragment) {
+                    $('.menuPop').replaceWith(fragment);
+        			$('.mainMenuBtn, .menuPop').addClass('on');
+                }
+            );			
+		}
+	}
+	
+	//메뉴 팝업 > 외부영역 클릭 시 메뉴 팝업 닫기
+	$(document).mouseup(e => {
+		if(!$(".menuPop")[0].contains(e.target) && !$(".mainMenuBtn")[0].contains(e.target)) {
+			$('.mainMenuBtn, .menuPop').removeClass('on');
+		}
+		if(!$(".alarmPop")[0].contains(e.target) && !$(".chkAlarmBtn")[0].contains(e.target)) {
+			$('.chkAlarmBtn, .alarmPop').removeClass('on');
+		}
+	});
+	
+	//퀵메뉴 설정 팝업
+	function fnQuickPopup() {
+		if($('.quickPop').hasClass('on')) {
+	        $(".quickPop, .quickPopBg").removeClass("on");
+	        $("body").removeClass("scrLock");		
+		} else {
+	        fn_axios.get(
+    			"/mnu/mnu/quickPopup.do"
+    			, function(fragment){   
+    				$('.quickPop').replaceWith(fragment);
+    				
+    				$(".quickPop, .quickPopBg").addClass("on");
+    			    $("body").addClass("scrLock");	    				
+    			}
+    		);	
+		}
+	}
+	
+	//퀵메뉴 설정 저장
+	function fnQuickSave() {
+		const userMenus = $('.quickPop .customizeOption ._confirm').map((i, el) => {
+			return $(el).data('menuId');
+		}).get();
+		
+		const formData = new FormData();
+		formData.append("menuId", userMenus);
+		
+		fn_axios.post(
+			"/mnu/mnu/quickSave.do"
+			, formData
+			, function(fragment){   
+				$('.hQuick').replaceWith(fragment);
+				
+		        $(".quickPop, .quickPopBg").removeClass("on");
+		        $("body").removeClass("scrLock");	
+			}
+		);	
+	}	
+	
+	//퀵메뉴 선택
+	function fnSelQuick(_this) {
+		if($(_this).hasClass('_default')) {
+			if($('.quickPop .customizeOption ._confirm').length >= 3) {
+				alert('더 이상 추가할 수 없습니다.');
+				return;
+			}
+			$(_this).addClass('_confirm').removeClass('_default');
+		} else {
+			$(_this).addClass('_default').removeClass('_confirm');
+		}
+	}
+	
+	/* 알림내용 확인 */ 
+	function fnOpenAlarmList(_this){
+        if(!$(_this).hasClass("on")){
+	        fn_axios.post(
+	    			"/mnu/mnu/comAlarmAjax.do"
+	    			, ""
+	    			, function(fragment){   
+	    				$('#comAlarmArea').replaceWith(fragment);
+	    				//메인 알림내역 카테고리 슬라이드처리
+	    		        var swiper223 = new Swiper(".alarmSlide", {
+	    		        	slidesPerView: 2,
+	    		        	slidesPerGroup : 1,
+	    		        	autoplay: false,
+	    		        	loop: false,
+	    		            spaceBetween: 6,
+	    		            navigation: {
+	    		                nextEl: ".alarmNxtBtn",
+	    		                prevEl: ".alarmPrevBtn",
+	    		            }
+	    		        });
+	    			}
+	    		);
+        }
+		$(_this).toggleClass("on");
+        $(_this).next("div").toggleClass("on");
+        $(".loginInner").removeClass("underOn");
+        $(".memberOptionCov").removeClass("underOn");
+        $(".memberOptCont > div").hide();
+	}
+	
+	/* 알림 탭 선택함수 */
+	function fnAlarmTab(ntfnSeCd, _this){
+		$(_this).siblings().children('a').removeClass('active');
+		$(_this).children('a').addClass('active');
+		
+		const formData = new FormData();
+		formData.append("ntfnSeCd", ntfnSeCd);
+		
+		fn_axios.post(
+    			"/mnu/mnu/comAlarmListAjax.do"
+    			, formData
+    			, function(fragment){   
+    				$('#comAlarmList').replaceWith(fragment);
+    			}
+    		);
+	}
+	
+	/* 알림 내역 유형별 페이지 이동 */
+	function fnComDetailLink(alarmGbn, ntfnLogId, _this){
+		if(!alarmGbn){
+			return false;
+		} 
+		if(!ntfnLogId){
+			return false;
+		} 
+		
+		// 이미 읽은건 넘어가기
+		if(!$(_this).hasClass('readed')){
+			// 알림 읽음처리
+			const formData = new FormData();
+			formData.append("ntfnLogId", ntfnLogId);
+			formData.append("ntfnSeCd", alarmGbn);
+			fn_axios.post(
+	    			"/mnu/mnu/comAlarmReadSave.do"
+	    			, formData
+	    			, function(data){   
+	    			}
+	    		);
+		}
+		
+		if(alarmGbn == '40'){
+			// 온라인대입상담 : 클릭 >대입상담 >온라인대입상담 >내가쓴글 Default 상태로 화면 이동
+			window.location.href = "/uve/oca/onlineConseView.do?menuId=PCUVEOCA1000";
+		} else if (alarmGbn == '50'){
+			// 제안 및 건의 : 클릭 >마이페이지 >제안 및 건의 화면으로 이동
+			$("#comSearchTabGbn").val("03");
+			var frmData = document.comRecFrm;
+			frmData.action = "/mpg/apl/receptionHistView.do?menuId=PCMPGAPL3001";
+			frmData.submit();
+		} else if (alarmGbn == '60'){
+			// 대입전략자료실 : 클릭 >대입정보센터 >대입전략자료실 화면으로 이동
+			window.location.href = "/uct/ces/archiveView.do?menuId=PCUCTCES1000";
+		} else if (alarmGbn == '70'){
+			// 대입소식 : 클릭 >대입정보센터 >대입소식 화면으로 이동
+			window.location.href = "/uct/nmg/mgz/magazineView.do?menuId=PCUCTNMG1100";
+		} else if (alarmGbn == '80'){
+			// 대학입학전형시행계획 : 클릭 불가, 알림 항목만 리스트 노출
+			window.location.href = "/mpg/ans/alarmSettingView.do?menuId=PCMPGALM1000&searchCode=80";
+		}
+	}
+	</script>
+	<!-- 좌상단 메뉴 아이콘 + 팝업 메뉴 영역 -->
+	<div class="hMenu">
+		<a href="javascript:void(0)" class="mainMenuBtn" onclick="fnMenuPopup();" title="전체메뉴"><span class="hidden">전체메뉴보기</span></a>
+		<div class="menuPop">
+			<div class="menuPopInner">
+				
+			</div>
+		</div>
+		<a href="/ucp/map/mapSearchView.do?menuId=PCMAPINF1000" class="goMap" title="지도검색"><span class="hidden">지도검색</span></a> <!-- JH Code -->
+	</div>
+	<!-- ./좌상단 메뉴 아이콘 + 팝업 메뉴 영역 -->
+	
+	<!-- ./퀵 메뉴 영역 -->
+	<div class="hQuick">
+		<ul>
+			<!-- 대표 메뉴 -->
+			<li>
+				<a href="/jbp/jnf/jobInfoView.do?menuId=PCJBPJNF2000">
+					<span>
+						<img alt="직업정보" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200718&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">직업정보</p>
+				</a>
+			</li>
+			<li>
+				<a href="/ucp/uvt/uni/univView.do?menuId=PCUVTINF2000">
+					<span>
+						<img alt="대학정보" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200615&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">대학정보</p>
+				</a>
+			</li>
+			<li>
+				<a href="/ucp/cls/uni/classUnivView.do?menuId=PCCLSINF2000">
+					<span>
+						<img alt="학과정보" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200047&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">학과정보</p>
+				</a>
+			</li>
+			<li>
+				<a href="/ucp/prc/uni/admssUnivView.do?menuId=PCPRCINF2000">
+					<span>
+						<img alt="전형정보" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200597&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">전형정보</p>
+				</a>
+			</li>
+			<li>
+				<a href="/sco/agu/univScoScaAnlsView.do?menuId=PCSCOAGU2000">
+					<span>
+						<img alt="대학성적분석" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200621&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">대학성적분석</p>
+				</a>
+			</li>
+			<li>
+				<a href="/mpg/sga/ssa/schoolScoreMngeView.do?menuId=PCMPGSGA1001">
+					<span>
+						<img alt="학생부입력" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200623&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">학생부입력</p>
+				</a>
+			</li>
+			<li>
+				<a href="/uct/ces/archiveView.do?menuId=PCUCTCES1000">
+					<span>
+						<img alt="대입정보자료" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200045&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">대입정보자료</p>
+				</a>
+			</li>
+			<li>
+				<a href="/uve/oca/tsrdOnlineConseView.do?menuId=PCUVEOTA1000">
+					<span>
+						<img alt="종합전형상담" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000246772&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">종합전형상담</p>
+				</a>
+			</li>
+			<li>
+				<a href="/uve/oca/onlineConseView.do?menuId=PCUVEOCA1000">
+					<span>
+						<img alt="대입상담" src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200704&amp;fileSn=1&amp;defaultType=03">
+					</span>
+					<p class="body1 reg">대입상담</p>
+				</a>
+			</li>
+			<!-- ./메뉴 대표 -->
+			<li>
+				<a href="javascript:void(0)" class="mainPopBtn" onclick="fnQuickPopup();">			
+					<span><img src="/static/img/common/head_quick_more.png" alt="퀵메뉴더보기아이콘"></span>
+					<p class="body1 reg">메뉴편집</p> <!-- JH Code -->
+				</a>
+				<div class="quickPop">
+					
+				</div>
+				<div class="quickPopBg"></div>
+			</li>
+		</ul>
+	</div>
+	<!-- ./퀵 메뉴 영역 -->
+	<form id="comRecFrm" name="comRecFrm" method="post" onsubmit="return false;" action="/"><input type="hidden" name="_csrf" value="32064231-d6b4-457c-9ae4-3c9639531f92"/>
+		<input type="hidden" name="searchTabGbn" id="comSearchTabGbn"/>
+	</form>
+	<!-- ./알림 영역 -->	
+	<div class="hAlert">
+		<ul>
+			<!-- <li>
+				<a th:href="@{/ucp/map/mapSearchView.do?menuId=PCMAPINF1000}" class="goMap" title="지도검색"><span class="hidden">지도검색</span></a>
+			</li> --> <!-- JH Code -->
+			<li>
+				
+					<a href="/mbs/log/mbsLogView.do?menuId=PCMBSLOG1000" class="chkAlarmBtn" title="알림"><span class="hidden">알림</span></a>
+				
+					
+				<div class="alarmPop">
+					<div class="alarmPopInner" id="comAlarmArea">
+						<div class="alarmHead">
+							<p class="title">알림</p>
+							<div class="alarmSlide">
+								<a href="javascript:void(0)" class="alarmPrevBtn"><span class="hidden">알림 좌측버튼</span></a>
+								<div class="swiper-wrapper">
+									<div class="swiper-slide" onclick="fnAlarmTab(&#39;&#39;,this);">
+										<a href="javascript:void(0)" class="active">전체</a>
+									</div>
+									
+								</div>
+								<a href="#none" class="alarmNxtBtn"><span class="hidden">알림 우측버튼</span></a>
+							</div>
+						</div>
+						<div class="alarmBody" id="comAlarmList">
+							<ul>
+								
+							</ul>
+						</div>
+					</div>
+				</div>
+			</li>
+			<li>
+				<a href="/mpg/smn/mypageMainView.do?menuId=PCMPGSMN0001" title="마이페이지"><span class="hidden">마이페이지</span></a>
+			</li>
+		</ul>
+	</div>
+</div>
+			</div>
+		</div> <!-- JH Code -->
+		
+		<div id="bodyContent" class="container">
+		<form id="linkFrm" name="linkFrm" method="POST" action="/"><input type="hidden" name="_csrf" value="32064231-d6b4-457c-9ae4-3c9639531f92"/></form>
+		<div class="contInner">
+			<div class="mainLtCont">
+				<div class="mainSlide">
+					<div class="swiper-button-next ms01Next"></div>
+					<div class="swiper-wrapper">
+						
+						
+							<div class="swiper-slide">
+								<a href="https://www.adiga.kr/cct/pbf/noticeDetail.do?_csrf=5968871c-d9cc-4d2a-b3e1-5e4638649f17&amp;prtlBbsId=26511&amp;menuId=PCCCTPBF1000" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000246754&amp;fileSn=1" alt="학생부종합전형 상담" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+							<div class="swiper-slide">
+								<a href="https://www.adiga.kr/cct/pbf/noticeDetail.do?menuId=PCCCTPBF1000&amp;prtlBbsId=25714" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000245455&amp;fileSn=1" alt="정시점수산출" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+							<div class="swiper-slide">
+								<a href="https://youtu.be/lnTnOJ032yY?si=_KaEh61M5BdobSrc" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000244326&amp;fileSn=1" alt="공통원서" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+							<div class="swiper-slide">
+								<a href="https://adiga.kr/cct/pbf/noticeDetail.do?_csrf=36985473-7d2b-4f14-b179-f8b74f234004&amp;prtlBbsId=20980&amp;menuId=PCCCTPBF1000" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200003&amp;fileSn=1" alt="NEW차세대" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+							<div class="swiper-slide">
+								<a href="https://www.youtube.com/@kcue-adigatv" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200008&amp;fileSn=1" alt="어디가TV" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+							<div class="swiper-slide">
+								<a href="https://adiga.kr/uct/asi/dct/glossaryView.do?menuId=PCUCTASI3100" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200009&amp;fileSn=1" alt="대입용어사전" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+							<div class="swiper-slide">
+								<a href="https://www.academyinfo.go.kr/index.do" target="_blank">
+									<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000200010&amp;fileSn=1" alt="대학알리미" onerror="this.src='/static/img/main/pc_banner_main.png'" />
+								</a>
+							</div>
+						
+					</div>
+					<div class="swiper-button-prev ms01Prev"></div>
+					<div class="swiper-pagination"></div>
+					<div class="swiper-play-control">
+						<a href="#none" class="msPause hide">정지</a>
+					</div>
+				</div>
+				<!-- 성적분석,진로정보 -->
+				
+		
+	  		<!-- 성적분석,진로정보 -->
+			<div class="mainInfoCont01">
+				<div class="micTitBox">
+					<ul>
+						<li class="on"><a href="javascript:void(0)" id="anisTab" onclick="fnAnlsJobTab(this);">성적분석</a></li>
+						<li><a href="javascript:void(0)" id="jobTab" onclick="fnAnlsJobTab(this);">진로정보</a></li>
+					</ul>
+					<p id="left1Text">학생부,수능/모의고사 성적을 원하는 전형조건으로 분석해 드립니다.</p>
+				</div>
+	
+				<div class="micTabCov">
+					<div class="mictabCont01">
+						<!-- 로그인 전-->
+						<div class="stepList beforeLogin" id="anlsInsertArea">
+							<ul>
+								<li class="list01">
+									<div>
+										<span class="stepMk">STEP1</span>
+										<p class="stepSub">학생부/수능/모의고사</p>
+										<p class="stepTit">성적선택</p>
+										<ul>
+											<li><a href="/sco/sca/schScoAnlsView.do?menuId=MOSCOSCA1001">학생부 성적입력</a></li>
+											<li><a href="/sco/cat/catScoAnlsView.do?menuId=PCSCOCAT2001">수능/모의 성적입력</a></li>
+										</ul>
+									</div>
+								</li>
+								<li class="list02">
+									<div>
+										<span class="stepMk">STEP2</span>
+										<p class="stepSub">분석하고 싶은</p>
+										<p class="stepTit">대학/학과/전형선택</p>
+										<ul class="dvHlf">
+											<li><a href="/ucp/uvt/uni/univView.do?menuId=PCUVTINF2000">대학검색</a></li>
+											<li><a href="/ucp/cls/uni/classUnivView.do?menuId=PCCLSINF2000">학과검색</a></li>
+											<li><a href="/ucp/prc/uni/admssUnivView.do?menuId=PCPRCINF2000">전형검색</a></li>
+										</ul>
+									</div>
+								</li>
+								<li class="list03">
+									<div>
+										<span class="stepMk">STEP3</span>
+										<p class="stepSub">성적분석</p>
+										<p class="stepTit">결과분석</p>
+										<ul>
+											<li><a href="/sco/sca/schScoAnlsView.do?menuId=PCSCOSCA1000">성적분석 결과확인</a></li>
+											<li><a href="/sco/agu/univScoScaAnlsView.do?menuId=PCSCOAGU2000">대학별 내 점수확인</a></li>
+										</ul>
+									</div>
+								</li>
+								<li class="list04">
+									<div>
+										<span class="stepMk">STEP4</span>
+										<p class="stepSub">상담안내</p>
+										<p class="stepTit">대입상담</p>
+										<ul>
+											
+												<li><a href="/uve/oca/onlineConseView.do?menuId=PCUVEOCA1000">온라인대입상담</a></li>
+<!-- 												<li><a th:href="@{/uve/oca/onlineConseView.do?menuId=PCUVEOCA1000}">온라인 대입상담</a></li> -->
+<!-- 												<li><a th:href="@{/uve/sma/untactMainView.do?menuId=PCUVESMA1000}">비대면 온라인상담</a></li> -->
+											
+										</ul>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<!-- // 로그인 전-->
+	
+						<!-- 로그인 후 -->
+						<div class="micAflog afterLogin" id="anlsGrpArea">
+							<div class="micTitBoxSm">
+								<ul>
+									<li class="on" onclick="fnAnlsGrpTab('1',this);"><a href="javascript:void(0)">학생부 성적</a></li>
+									<li onclick="fnAnlsGrpTab('2',this);"><a href="javascript:void(0)">수능/모의고사</a></li>
+								</ul>
+								<a href="/sco/sca/schScoAnlsView.do?menuId=PCSCOSCA1000">더보기</a>
+							</div>
+							
+							<div class="graphArea">
+								<input type="radio" name="frmRdoMajor" checked="checked" value="1" style="display: none;" title="성적분석 그래프">
+								<div class="graphBox" id="semStdptGraph">
+								</div>
+								<div class="graphBox" id="mxtrGraph" style="display: none;">
+								</div>
+								<div id="semCourseGraph" style="display: none;"></div>
+							</div>
+						</div>
+						<!-- // 로그인 후 -->
+					</div>
+					<div class="micTabCont02 beforeLogin" id="jobInfoArea">
+						<form id="jobInfoFrm" name="jobInfoFrm" method="POST" action="/"><input type="hidden" name="_csrf" value="32064231-d6b4-457c-9ae4-3c9639531f92"/>
+							<input type="hidden" name="menuId" id="jobInfoFrmMenuId">
+							<input type="hidden" name="searchMainYn" value="Y">
+							<div class="selOpt">
+								<div class="comSelectTpStk tbType">
+									<button type="button" class="selCustBtn">키워드 별</button>
+									<div class="optArea">
+										<div class="optInner">
+											<span class="divLine"></span>
+											<input type="hidden" name="searchType" id="searchType" value="K">
+											<ul>
+												<li onclick="fnJobTypeChange(this, 'K');"><a href="javascript:void(0)">키워드별</a></li>
+												<li onclick="fnJobTypeChange(this, 'C');"><a href="javascript:void(0)">조건별</a></li>
+											</ul>
+										</div>
+									</div>
+								</div>
+								<div class="changableOpt">
+									<!--키워드별 선택시-->
+									<div class="optTy01" id="kArea">
+										<input type="text" title="진로정보 검색어 입력" id="searchKeyword" name="searchKeyword" placeholder="키워드를 입력해주세요." maxlength="500" onkeypress="if(event.keyCode==13){fnSearchJobInfo(); return false;}">
+									</div>
+									<div class="optTy02" id="cArea" style="display:none;">
+										<div class="comSelectTpStk tbType">
+											<button type="button" class="selCustBtn">평균연봉</button>
+											<div class="optArea">
+												<div class="optInner">
+													<span class="divLine"></span>
+													<input type="hidden" name="searchAvgSal" id="searchAvgSal">
+													<ul>
+														<li onclick="fnSelTypeSet(this, '');"><a href="#none"  id='searchAvgSal_0'>선택안함</a></li>
+														<li onclick="fnSelTypeSet(this, '10');"><a href="#none" id='searchAvgSal_10'>3,000만원 미만</a></li>
+														<li onclick="fnSelTypeSet(this, '20');"><a href="#none" id='searchAvgSal_20'>3,000~4,000만원 미만</a></li>
+														<li onclick="fnSelTypeSet(this, '30');"><a href="#none" id='searchAvgSal_30'>4,000~5,000만원 미만</a></li>
+														<li onclick="fnSelTypeSet(this, '40');"><a href="#none" id='searchAvgSal_40'>5,000만원 이상</a></li>
+													</ul>
+												</div>
+											</div>
+										</div>
+										<div class="comSelectTpStk tbType">
+											<button type="button" class="selCustBtn">직업전망</button>
+											<div class="optArea">
+												<div class="optInner">
+													<span class="divLine"></span>
+													<input type="hidden" name="searchProspect" id="searchProspect">
+													<ul>
+														<li onclick="fnSelTypeSet(this, '');"><a href="#none" id="searchProspect_0">선택안함</a></li>
+														<li onclick="fnSelTypeSet(this, '1');"><a href="#none" id="searchProspect_1">증가</a></li>
+														<li onclick="fnSelTypeSet(this, '2');"><a href="#none" id="searchProspect_2">다소 증가</a></li>
+														<li onclick="fnSelTypeSet(this, '3');"><a href="#none" id="searchProspect_3">유지</a></li>
+														<li onclick="fnSelTypeSet(this, '4');"><a href="#none" id="searchProspect_4">다소 감소</a></li>
+														<li onclick="fnSelTypeSet(this, '5');"><a href="#none" id="searchProspect_5">감소</a></li>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!--조건상관없이 공통-->
+								<button type="button" class="searchBtn" onclick="fnSearchJobInfo();">검색</button>
+							</div>
+		
+							<div class="linkCont">
+								<ul>
+									<li class="linkList01">
+										<a href="/jbp/jnf/jobInfoView.do?menuId=PCJBPJNF2000">
+											<p class="tit">직업분류</p>
+											<p class="desc">국내 모든 직업을 분야별로 <br>분류직업에 대한 상세한 정보를 <br>제공합니다.</p>
+										</a>
+									</li>
+									<li class="linkList02">
+										<a href="/jbp/tst/jobPsyTestView.do?menuId=PCJBPJNF4000">
+											<p class="tit">직업심리검사</p>
+											<p class="desc">심리적인 특성들이 각 작업에서 <br>요구하는 능력수준 및 특성에 얼마나<br> 적합한지 측정합니다.</p>
+										</a>
+									</li> <!-- JH Code -->
+								</ul>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+			<!-- // 성적분석,진로정보 -->
+		
+		
+     
+				<!-- 성적분석,진로정보  -->
+				
+				<!-- 이미지 배너 영역 -->
+				
+    	<div class="mainInfoCont02">
+			
+				<a href="/uct/acd/ade/criteriaAndResultView.do?menuId=PCUCTACD2000">
+					<img src="/static/img/temp/img_banner.png" alt="전년도 평가기준 및 전년도 결과공개 이미지" />
+				</a>
+			
+			
+		</div>
+     
+				<!-- // 이미지 배너 영역 -->
+
+				<!-- 대학학과전형 검색 영역 -->
+				
+    		
+	    	<div class="mainInfoCont03">
+				<p class="tit">대학/학과/전형 검색</p>
+				<p class="desc">나에게 적합한 입시전략을 세우기 위하여 대학,학과,전형 검색을 통하여 다양한 입시정보를 찾을 수 있도록 도와드립니다.</p>
+				<div>
+					<ul>
+						<li class="list01">
+							<a href="/ucp/uvt/uni/univView.do?menuId=PCUVTINF2000">
+								<p class="listTit">대학정보</p>
+								<p class="listDesc">
+									대학 교육여건, 설치학과 등의 기본 정보 및 모집요강, 대입특징, 대학 소식 등의 정보
+								</p>
+							</a>
+						</li>
+						<li class="list02">
+							<a href="/ucp/cls/uni/classUnivView.do?menuId=PCCLSINF2000">
+								<p class="listTit">학과정보</p>
+								<p class="listDesc">
+									교육목표, 교육과정, 진로취업분야, 등록금, 취업률, 경쟁률 등 학생들이 궁금해 하는 학과의 주요정보
+								</p>
+							</a>
+						</li>
+						<li class="list03">
+							<a href="/ucp/prc/uni/admssUnivView.do?menuId=PCPRCINF2000">
+								<p class="listTit">전형정보</p>
+								<p class="listDesc">
+									전형일정이나 방법, 그리고 어떤 기준으로 학생을 선발하는지, 어렵게만 느껴졌던 전형에 대한 정보
+								</p>
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			
+			
+     
+				<!-- // 대학학과전형 검색 영역  -->
+			</div>
+
+			<div class="mainRtCont">
+				
+				<!-- 로그인 영역 -->
+				
+    	<div class="loginArea">
+    		<input type="hidden" name="userId" id="loginUserId" value="">
+    		<!-- 로그인 이전 영역 -->
+			<div class="loginInner bfLog beforeLogin">
+				<h3 class="lgTit h3">만나서 반가워요!</h3>
+				<div class="lgIcon"><img src="/static/img/main/login_icon.png" alt="로그인 아이콘" /></div> <!-- JH Code -->
+				<a href="/mbs/log/mbsLogView.do?menuId=PCMBSLOG1000" class="h5">로그인</a>
+				<div class="memberFn">
+					<ul>
+						<li><a href="/mbs/uif/findIdView.do?menuId=PCMBSUIF1000" class="body2 reg">아이디찾기</a></li>
+						<li><a href="/mbs/upf/findPasswordView.do?menuId=PCMBSUPF1000" class="body2 reg">비밀번호 찾기</a></li>
+						<li><a href="/mbs/jdm/memberJoinView.do?menuId=PCMBSJDM1000" class="body2 reg">회원가입</a></li>
+					</ul>
+				</div>
+			</div>
+			<!-- // 로그인 이전 영역  -->
+			
+			<!-- 로그인 이후 영역 -->
+			
+		</div>
+     
+				<!-- // 로그인 영역  -->
+
+				<!-- 홍보 Platform -->
+				
+		
+			<div class="adArea">
+				<div class="mcTitleBox">
+					<p class="mcTit h4 bold">대입 정보</p>
+				</div>
+				<div class="adTitBox">
+					<p class="adTit h5">대입정보매거진</p>
+					<div>
+						<a href="/uct/nmg/mgz/magazineView.do?menuId=PCUCTNMG1100" class="body2 reg">더보기</a>
+						<div class="swiper-button-prev ms02Prev"></div>
+						<div class="swiper-button-next ms02Next"></div>
+					</div>
+				</div>
+				<div class="adSlide01">
+					<div class="swiper-wrapper" id="magazineList">
+						<div class="swiper-slide" onclick="fnMoveDetail(&quot;magazine&quot;,&quot;https:\/\/magazine.adiga.kr\/adiga\/202512\/index.php&quot;);" style="cursor: pointer;">
+							<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000246048&amp;fileSn=1" alt="홍보이미지 01" onerror="this.src='/static/img/main/pc_banner_slide.png'"/>
+						</div>
+						<div class="swiper-slide" onclick="fnMoveDetail(&quot;magazine&quot;,&quot;https:\/\/magazine.adiga.kr\/adiga\/202510\/index.php&quot;);" style="cursor: pointer;">
+							<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000244614&amp;fileSn=1" alt="홍보이미지 01" onerror="this.src='/static/img/main/pc_banner_slide.png'"/>
+						</div>
+						<div class="swiper-slide" onclick="fnMoveDetail(&quot;magazine&quot;,&quot;https:\/\/magazine.adiga.kr\/adiga\/202508\/index.php&quot;);" style="cursor: pointer;">
+							<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000243424&amp;fileSn=2" alt="홍보이미지 01" onerror="this.src='/static/img/main/pc_banner_slide.png'"/>
+						</div>
+					</div>
+				</div>
+				
+				<div class="adTitBox last">
+					<p class="adTit h5">대학어디가TV</p>
+					<div>
+						<a href="/uct/nmg/gtv/adigaTvView.do?menuId=PCUCTNMG1200" class="body2 reg">더보기</a>
+						<div class="swiper-button-prev ms03Prev"></div>
+						<div class="swiper-button-next ms03Next"></div>
+					</div>
+				</div> <!-- JH Code -->
+				<div class="adSlide02">
+					<div class="swiper-wrapper" id="adigaTvList">
+						<div class="swiper-slide" onclick="fnMoveDetail(&quot;adigaTV&quot;,&quot;69&quot;);" style="cursor: pointer;">
+							<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000246429&amp;fileSn=2" alt="홍보이미지 01" onerror="this.src='/static/img/main/pc_banner_slide.png'"/>
+						</div>
+						<div class="swiper-slide" onclick="fnMoveDetail(&quot;adigaTV&quot;,&quot;74&quot;);" style="cursor: pointer;">
+							<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000246895&amp;fileSn=2" alt="홍보이미지 01" onerror="this.src='/static/img/main/pc_banner_slide.png'"/>
+						</div>
+						<div class="swiper-slide" onclick="fnMoveDetail(&quot;adigaTV&quot;,&quot;64&quot;);" style="cursor: pointer;">
+							<img src="/cmm/com/file/imageFileDown.do?fileId=00000000000000246209&amp;fileSn=2" alt="홍보이미지 01" onerror="this.src='/static/img/main/pc_banner_slide.png'"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="uct uctPopup"> 
+				<!-- 대입정보센터 > 대입소식 > 홍보 PlatForm > 대학어디가TV > 상세(팝업)-->
+				<div id="adigaTvDetail" class="modPopup">
+	<div class="popupDim">딤영역</div>
+	<div class="popupArea popup1Cont mdPop">
+		<!-- 팝업 사이즈 컨트롤 : lgPop - 대 / mdPop - 중 / smPop - 소 / miniPop - 일반레이어 용-->
+		<div class="popupInMotion">
+			<div class="popupContainer">
+				<div class="popupContArea">
+
+					<div class="popTitleBox">
+						<h1 class="popTitle">대학어디가TV</h1>
+						<button class="popCloseBtn" onclick="document.getElementsByClassName('modDivision')[0].remove(); closePopup('adigaTvDetail');">
+							<span class="hidden">닫기</span>
+						</button>
+					</div>
+
+					<div id="adigaTvPopCont" class="popCont">
+
+						<!-- 팝업 컨텐츠 영역 -->
+
+						<div class="modDivision">
+							<!-- 임시 샘플주소 -->
+							
+						</div>
+
+						<!-- //팝업 컨텐츠 영역 -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+			</div>
+		
+		
+	 
+				<!-- // 홍보 Platform -->
+				
+				<!-- 시기별 정보뉴스 -->
+				
+	   <script>
+	   function fnTermType(termType) {
+			var formData = new FormData();    	
+			formData.append("termType", termType);
+			
+			var form = document.frm;
+			form.action = "/man/inf/moveMainTermLst.do?menuId=PCUCTASI4100&termType=" + termType;
+		
+			form.submit();
+		}
+	   </script>
+    
+    	
+    	
+		<form name="frm" id="frm" method="post" action="/"><input type="hidden" name="_csrf" value="32064231-d6b4-457c-9ae4-3c9639531f92"/>
+			<div class="mainNews">
+				<div class="mcTitleBox">
+					<p class="mcTit h4 bold">대입 주요자료</p>
+					<a href="/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000" class="body2 reg" id="infoCenterLink">더보기</a>
+				</div>
+				<div class="newsListTab">
+					<div class="swiper-button-prev ms04Prev"></div>
+					<div class="newsListSlide">
+						<div class="swiper-wrapper">
+							<div class="swiper-slide"><a href="javascript:void(0)" class="active body1 reg" onclick="fnNewsList();">대입뉴스</a></div>
+							<div class="swiper-slide"><a href="javascript:void(0)" class="body1 reg" onclick="fnArchiveList();">대입정보자료실</a></div>
+							<!-- <div class="swiper-slide"><a href="javascript:void(0)" class="body1 reg" onclick="fnLibList();">대입용어사전</a></div> -->
+							<div class="swiper-slide"><a href="javascript:void(0)" class="body1 reg" onclick="fnTermList();">주요입시용어</a></div>
+						</div>
+					</div>
+					<div class="swiper-button-next ms04Next"></div>
+				</div>
+				<div class="newsListBox">
+					<!-- 대입뉴스 -->
+					<div class="newsList" id="newsList">
+						<ul>
+							
+						</ul>
+					</div>
+					
+					<!-- 대입전략자료실 -->
+					<div class="newsList" id="archiveList">
+						<ul>
+							
+						</ul>
+					</div>
+					
+					<!-- 대입용어사전 -->
+					<!-- <div class="newsList" id="libList">
+						<ul>
+							<li>
+								<div class="imgThumb">
+									<img src="/static/img/temp/news_thumb02.png" alt="대입뉴스 썸네일이미지02" />
+								</div>
+							</li>
+							<li>
+								<div class="imgThumb">
+									<img src="/static/img/temp/news_thumb03.png" alt="대입뉴스 썸네일이미지03" />
+								</div>
+							</li>
+							<li>
+								<div class="imgThumb">
+									<img src="/static/img/temp/news_thumb01.png" alt="대입뉴스 썸네일이미지" />
+								</div>
+							</li>
+						</ul>
+					</div> -->
+					
+					<!-- 주요입시용어 -->
+					<div class="newsList" id="termList">
+						<ul>
+							<li>
+								<div class="imgThumb">
+									<a href="javascript:void(0)" onclick="fnTermType(&#39;tsrdAdpn01&#39;);">
+										<img src="/static/img/term/tsrdAdpnView01.png" alt="주요입시용어 썸네일이미지 01" />
+									</a>
+								</div>
+							</li>
+							<li>
+								<div class="imgThumb">
+									<a href="javascript:void(0)" onclick="fnTermType(&#39;tsrdNsbj01&#39;);">
+										<img src="/static/img/term/tsrdNsbjView01.png" alt="주요입시용어 썸네일이미지 01" />
+									</a>
+								</div>
+							</li>
+							<li>
+								<div class="imgThumb">
+									<a href="javascript:void(0)" onclick="fnTermType(&#39;ru01&#39;);">
+										<img src="/static/img/term/ruView01.png" alt="주요입시용어 썸네일이미지 01" />
+									</a>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</form>
+			<!-- 팝업영역 -->
+			<div class="uct uctPopup"> 
+				<!-- 대입뉴스 상세팝업 -->
+				<div id="newsDetail" class="modPopup">
+	<div class="popupDim">딤영역</div>
+	<div class="popupArea popup1Cont lgPop">
+		<!-- 팝업 사이즈 컨트롤 : lgPop - 대 / mdPop - 중 / smPop - 소-->
+		<div class="popupInMotion">
+			<div class="popupContainer">
+				<div class="popupContArea">
+
+					<div class="popTitleBox">
+						<h1 class="popTitle">대입뉴스</h1>
+						<button class="popCloseBtn" type="button" onclick="closePopup('newsDetail');">
+							<span class="hidden">닫기</span>
+						</button>
+					</div>
+
+					<div id="newsPopCont" class="popCont">
+
+						<!-- 팝업 컨텐츠 영역 -->
+						<div class="scroll">
+							<div class="modDivision incScr">
+								<div class="titleWordInfo">
+									<p></p>
+									<span></span>
+								</div>
+							</div>
+
+							
+
+							<div class="ArchiveDtContent">
+								<input type="hidden" id="lnaCn1" value="" />
+								<script>
+									var $cn = $("#lnaCn1");
+									$cn.replaceWith($cn.val().replaceAll('�', ''));
+								</script>
+							</div>
+						</div>
+						<!-- //팝업 컨텐츠 영역 -->
+
+					</div>
+					<div class="popBtm">
+						<button class="btnCTA _confirm" type="button" onclick="closePopup('newsDetail');">확인</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+		   		<!-- 대입정보센터 > 대입전략자료실 > 상세(팝업) -->
+				<div id="archiveDetail" class="modPopup"> <!-- class - on : 팝업오픈 -->
+    <div class="popupDim">딤영역</div>
+    <div class="popupArea popup1Cont lgPop"><!-- 팝업 사이즈 컨트롤 : lgPop - 대 / mdPop - 중 / smPop - 소-->
+        <div class="popupInMotion">
+            <div class="popupContainer">
+                <div class="popupContArea">
+
+                    <div class="popTitleBox">
+                        <h1 class="popTitle">대입정보자료실</h1>
+                        <button type="button" class="popCloseBtn" onclick="closePopup('archiveDetail');">
+                            <span class="hidden">닫기</span>
+                        </button>
+                    </div>
+                    
+                    <div id="archivePopCont" class="popCont">
+
+                        <!-- 팝업 컨텐츠 영역 -->
+                        <div class="scroll">
+                            <div class="modDivision incScr">
+                                <div class="titleWordInfo">
+                                    <span></span>
+                                </div>
+                            </div>
+							<div class="categoryCover">
+								<ul>
+									
+									<li></li>
+								</ul>
+							</div>
+							
+                            							
+
+                            <div class="ArchiveDtContent">
+                            	<input type="hidden" id="lnaCn2" value=""/>
+								<script>
+									var $cn = $("#lnaCn2");
+									$cn.replaceWith($cn.val().replaceAll('�',''));
+								</script>                            
+                            </div>
+                        </div>
+						
+						
+                        <!-- //팝업 컨텐츠 영역 -->
+
+                    </div>
+                    
+                    <div class="popBtm">
+                        <button type="button" class="btnCTA _confirm" onclick="closePopup(&#39;archiveDetail&#39;);">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>	
+			</div>
+		
+		
+     
+				<!-- // 시기별 정보뉴스 -->
+
+				<!-- 공지사항 -->
+				
+    	
+	    	<div class="noticeArea">
+				<div class="mcTitleBox">
+					<p class="mcTit h4 bold">공지사항</p>
+					<a href="/cct/pbf/noticeView.do?menuId=PCCCTPBF1000">더보기</a>
+				</div>
+	
+				<div class="noticeList">
+					<ul>
+						<li>
+							<span class="ntCate">일반</span>
+							<div>
+								<a href="javascript:void(0)" onclick="fnMoveDetail(&quot;notice&quot;,&quot;26527&quot;);"><p>대화형·추천형 서비스 일시 이용 제한 안내(2.3. 화)</p></a>
+							</div>
+						</li>
+						<li>
+							<span class="ntCate">일반</span>
+							<div>
+								<a href="javascript:void(0)" onclick="fnMoveDetail(&quot;notice&quot;,&quot;26511&quot;);"><p>학생부 종합전형 상담 운영 안내(2/2(월) 14:00~)</p></a>
+							</div>
+						</li>
+						<li>
+							<span class="ntCate">설명회</span>
+							<div>
+								<a href="javascript:void(0)" onclick="fnMoveDetail(&quot;notice&quot;,&quot;26100&quot;);"><p>2028 대입 정보 제공 설명회(중부권, 수도권, 영남권) 사전신청 안내(마감)</p></a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		
+		
+     
+				<!-- // 공지사항 -->
+				
+
+				<div class="csInfo">
+					<div class="csInner">
+						<div class="csTop">
+							<div class="phInfo">
+								<div>
+									<p class="phName">대입상담전화</p>
+									<p class="phNumber">1600-1615</p>
+								</div>
+								<div class="csBot">
+									<p>월 ~ 금 <span>09:00 ~ 22:00</span></p>
+									<p>토요일 <span>09:00 ~ 13:00</span></p>
+									<p>※일요일,공휴일 미운영</p>
+								</div> <!-- JH Code -->
+								<!-- <div>
+									<p class="phName">기타문의</p>
+									<p class="phNumber">02-6919-3960</p>
+								</div> -->
+							</div>
+							<div class="phIcon"></div>
+						</div>
+						
+					</div>
+				</div>
+				
+			</div>
+		</div>
+
+		<div class="affiliateArea">
+			<div class="affSlideControl">
+				<div class="affPrev"></div>
+				<div class="swiper-play-control">
+					<a href="#none" class="affPause hide">정지</a>
+				</div>
+				<div class="affNext"></div>
+			</div>
+			<div class="affSlide">
+				<div class="swiper-wrapper">
+					<div class="swiper-slide"><a href="https://moe.go.kr" target="_blank"><img src="/static/img/temp/moe.png" alt="교육부"><span class="hidden">교육부</span></a></div>
+					<div class="swiper-slide"><a href="https://okep.moe.go.kr/root/index.do" target="_blank"><img src="/static/img/temp/okep.png" alt="재외교육기관포털"><span class="hidden">재외교육기관포털</span></a></div>
+					<div class="swiper-slide"><a href="https://www.academyinfo.go.kr/index.do" target="_blank"><img src="/static/img/temp/b_banner2.png" alt="대학알리미"><span class="hidden">대학알리미</span></a></div>
+					<div class="swiper-slide"><a href="https://www.career.go.kr/cnet/front/main/main.do" target="_blank"><img src="/static/img/temp/career.png" alt="한국직업능력개발원 커리어넷"><span class="hidden">한국직업능력개발원 커리어넷</span></a></div>
+					<div class="swiper-slide"><a href="https://www.ebs.co.kr/" target="_blank"><img src="/static/img/temp/ebs.png" alt="EBS"><span class="hidden">EBS</span></a></div>
+					<div class="swiper-slide"><a href="https://www.kcce.or.kr/web/main/intro.do" target="_blank"><img src="/static/img/temp/kcce.png" alt="한국전문대학교교육협의회"><span class="hidden">한국전문대학교교육협의회</span></a></div>
+					<div class="swiper-slide"><a href="https://www.keris.or.kr/main/main.do" target="_blank"><img src="/static/img/temp/keris.png" alt="KERIS 한국교육학술정보원"><span class="hidden">KERIS 한국교육학술정보원</span></a></div>
+					<div class="swiper-slide"><a href="https://www.kice.re.kr/main.do?s=kice" target="_blank"><img src="/static/img/temp/kice.png" alt="한국교육과정평가원"><span class="hidden">한국교육과정평가원</span></a></div>
+					<div class="swiper-slide"><a href="https://info.kusf.or.kr" target="_blank"><img src="/static/img/temp/ksuf.png" alt="체육특기자대입포털"><span class="hidden">체육특기자대입포털</span></a></div>
+					<div class="swiper-slide"><a href="https://www.togetherschool.go.kr" target="_blank"><img src="/static/img/temp/tgtSchl.jpg" alt="함께학교"><span class="hidden">함께학교</span></a></div>
+				</div>
+			</div>
+		</div>
+	</div>
+		
+		<div id="fltMenu">
+    <ul>
+        <li class="regGuide">
+            <a href="javascript:fnAnlsFormGuide2();" class="qm1">
+                <span>성적입력 가이드</span>
+                <img src="/static/img/common/ico_guide_new_03.png" alt="성적입력가이드 아이콘">
+            </a>
+        </li>
+        <li class="regGuide">
+            <a href="javascript:popupOpen();" class="qm1">
+                <span>초보자 가이드</span>
+                <img src="/static/img/common/ico_guide_new.png" alt="초보자가이드 아이콘">
+            </a>
+        </li>
+        <li class="regGuide">
+            <a href="https://youtu.be/lnTnOJ032yY?si=_KaEh61M5BdobSrc" target="_blank" class="qm1">
+                <span>표준공통 원서접수 가이드</span>
+                <img src="/static/img/common/ico_guide_new_02.png" alt="표준공통원서접수가이드 아이콘"> <!-- JH Code -->
+            </a>
+        </li>
+        <li class="goTop">
+            <a href="#header" class="qm2">
+                <img src="/static/img/common/ico_arr_jobList.png" alt="상단으로바로가기 아이콘"><br>
+            </a>
+        </li>
+    </ul>    
+</div>
+		
+	<div id="footer">
+		<div class="footerInner">
+			<div class="footCont">
+				<div class="fcTop">
+					<div class="fcTopLt">
+						<ul>
+							<li class="highLt">
+								<a href="/mbs/gde/privacyPolicyView.do?menuId=PCMBSGDE1000" class="body3">개인정보처리방침</a>
+							</li>
+							<li>
+								<a href="/mbs/tut/termsPolicyView.do?menuId=PCMBSTUT1000" class="body3">이용약관</a>
+							</li>
+							<li>
+								<a href="/mbs/ruc/rejectEmailPolicyView.do?menuId=PCMBSRUC1000" class="body3">이메일주소 무단수집 거부</a>
+							</li>
+							<li>
+								<a href="/mbs/cop/copyrightPolicyView.do?menuId=PCMBSCOP1000" class="body3">저작권정책</a>
+							</li>
+							<li>
+								<a href="/cct/fqr/reg/suggestionView.do?menuId=PCCCTFQR3001" class="body3">제안 및 건의하기</a>
+							</li>
+						</ul>
+					</div>
+
+					<div class="fcTopRt">
+						<div class="tbSelectCov">
+							<div class="comSelectTpStk tbType">
+								<button type="button" class="selCustBtn">관련기관</button>
+							</div>
+							<div class="spCase_optArea">
+								<ul>
+									<li>
+										<a href="http://www.niied.go.kr" target="_blank">국립국제교육원</a>
+									</li>
+									<li>
+										<a href="http://www.moe.go.kr" target="_blank">교육부</a>
+									</li>
+									<li>
+										<a href="http://www.kedi.re.kr" target="_blank">한국교육개발원</a>
+									</li>
+									<li>
+										<a href="http://www.kice.re.kr" target="_blank">한국교육과정평가원</a>
+									</li>
+									<li>
+										<a href="http://www.ebs.co.kr" target="_blank">한국교육방송공사</a>
+									</li>
+									<li>
+										<a href="http://www.keris.or.kr" target="_blank">한국교육학술정보원</a>
+									</li>
+									<li>
+										<a href="http://www.kcue.or.kr" target="_blank">한국대학교육협의회</a>
+									</li>
+									<li>
+										<a href="http://www.kosaf.go.kr" target="_blank">한국장학재단</a>
+									</li>
+									<li>
+										<a href="http://www.kcce.or.kr" target="_blank">한국전문대학교육협의회</a>
+									</li>
+									<li>
+										<a href="http://www.krivet.re.kr" target="_blank">한국직업능력개발원</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="tbSelectCov">
+							<div class="comSelectTpStk tbType">
+								<button type="button" class="selCustBtn">Family Site</button>
+							</div>
+							<div class="spCase_optArea">
+								<ul>
+									<li>
+										<a href="http://www.academyinfo.go.kr" target="_blank">대학알리미</a>
+									</li>
+									<li>
+										<a href="http://aims.kcue.or.kr" target="_blank">대학기관평가인증</a>
+									</li>
+									<li>
+										<a href="http://www.campusasiaprogram.kr" target="_blank">캠퍼스아시아</a>
+									</li>
+									<li>
+										<a href="http://hrd.kcue.or.kr" target="_blank">고등교육연수원</a>
+									</li>
+									<li>
+										<a href="http://konige.kr" target="_blank">한국교양기초교육원</a>
+									</li>
+									<li>
+										<a href="http://magazine.kcue.or.kr" target="_blank">대학교육지</a>
+									</li>
+									<li>
+										<a href="https://info.kusf.or.kr" target="_blank">체육특기자대입포털</a>
+									</li>
+									<li>
+										<a href="https://www.togetherschool.go.kr" target="_blank">함께학교</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="fcBot">
+					<div class="fcBotLt">
+						<div class="logoThumbDesc">
+							<img src="/static/img/main/footer_logo01.png" alt="한국대학교육협회 Korean Council for University Education 로고" />
+							<div>
+								<p class="body3">
+									(우)08504 서울특별시 금천구 서부샛길 606<br /> (가산동, 대성디폴리스 A동, 22~23층) 전화문의 : 02-6919-3960<br />
+								<p class="body3 mgt5">Copyright2023. KCUE all rights reserved</p>
+							</div>
+						</div>
+					</div>
+					<div class="fcBotRt">
+						<div class="logoThumbDesc">
+							<img src="/static/img/main/footer_logo02.png" alt="한국전문대학교육협의회 Korea Council for University College Education 로고" />
+							<div>
+								<p class="body3">
+									(우)04505 서울특별시 중구 서소문로 38 (중림동 센트럴타워 7층)<br /> TEL : 02-3145-1200 | FAX : 02-364-1584<br />
+								</p>
+								<p class="body3 mgt5">Copyright2023. KCUE all rights reserved</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	</div>
+	
+		<script src="/static/js/comm/main.js"></script>
+	
+	
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+			    updateHiddenInputOnLoad();
+	
+			    function updateHiddenInputOnLoad() {
+			        const radios = document.querySelectorAll('input[name="emhsGraSeCd"]');
+			        radios.forEach(radio => {
+			            if (radio.checked) {
+			                const etcCn1Value = radio.getAttribute('data-etcCn1'); 
+			                document.getElementById('emhsGraSeCdNm').value = etcCn1Value;
+			            }
+			        });
+			    }
+			});
+		
+			var kvArray = [
+			  { key: 'human', 		value: '휴면 해제를 하지 않을 경우 서비스 이용이 불가합니다.\n해제 해 주세요.' },
+			  { key: 'terms', 		value: '약관 동의를 하지 않을 경우 서비스 이용이 불가합니다.\n동의 해 주세요.' },
+			  { key: 'privacy', 	value: '재동의를 하지 않을 경우 서비스 이용이 불가합니다.\n재동의 해 주세요.' },
+			  { key: 'school', 		value: '학교 업데이트를 하지 않을 경우 서비스 이용이 불가합니다.\n업데이트 해 주세요.' },
+			  { key: 'chcPrvc', 	value: '약관 동의를 하지 않을 경우 서비스 이용이 불가합니다.\n동의 해 주세요.' }
+			];
+
+			function fnAlert(type){
+				const result = kvArray.filter((t) => t.key == type).map((x) => x.value);
+				alert(result);
+			}
+			
+			function fnTerms(){
+				if( $("#aiFrmCheck:checked").length == 0 ){
+					fnAlert('terms');
+					return false;
+				}
+				
+				fn_axios.post(
+					"/mbs/jdm/termsSave.do"
+					, ''
+					, function(fragment){   
+						alert('동의 되었습니다.');
+						closePopup('terms');
+					}
+				);
+				
+			}
+			
+			function fnHuman(){
+				
+				fn_axios.post(
+					"/mbs/jdm/humanSave.do"
+					, ''
+					, function(fragment){
+						alert('휴면 상태가 해제되었습니다.');
+						closePopup('human');
+					}
+				);
+				
+			}
+			
+			function fnPrivacy(){
+				if( $("#frmCheck:checked").length == 0 ){
+					if(!confirm("동의하시겠습니까?")) return;
+				}
+				
+				fn_axios.post(
+					"/mbs/jdm/privacySave.do"
+					, ''
+					, function(fragment){   
+						alert('동의 되었습니다.');
+						closePopup('privacy');
+					}
+				);
+			}
+			
+			//학교 저장
+			function fnSaveSchool(){
+				
+				if( $("input[name=emhsGraSeCd]:checked").length == 0 ){
+					alert("학년을 선택하세요.");
+					return false;
+				}
+				
+				if( $("#hsclCd").val() == "" ){
+					alert("학교를 선택하세요.");
+					return false;
+				}
+				
+				if( $("#frmCheck2:checked").length == 0 ){
+					fnAlert('terms');
+					return false;
+				}
+				
+				fn_axios.post(
+					"/mbs/jdm/schoolSave.do"
+					, $("#schoolForm").serialize()
+					, function(fragment){   
+						alert('저장되었습니다.');
+						//closePopup('school');
+						fnPageMove('/man/inf/mainView.do?menuId=PCMANINF1000');
+					}
+				);
+			}
+			
+			
+			$(document).ready(function() {
+				
+				let emhsGraSeCd = $(".emhsGraSeCdClass:checked").val();
+				if("70" != emhsGraSeCd ){
+					let clickCnt = Number($(".emhsGraSeCdClass:checked").val())/10;
+					for(var i=0; i<clickCnt; i++){
+						$(".swiper-button-next").click();
+					}
+				}
+			});
+			
+			//비밀번호 3개월 연장
+			function fnChangePasswordUpdate(){
+				
+				fn_axios.post(
+					"/mbs/jdm/changePasswordUpdate.do"
+					, $("#schoolForm").serialize()
+					, function(fragment){   
+						closePopup('passwordChange');
+					}
+				);
+				
+			}
+			
+			//비밀번호 변경페이지 이동
+			function fnChangePasswordPage(){
+				closePopup('passwordChange');
+				location.href="/mpg/mei/pwc/pwdChangeView.do?menuId=PCMPGMEI3001";
+			}
+			
+			//학교선택 데이터
+			function fnCmmParentsSch(){
+				
+				if( $("#hsSearch .choose").length == 0 ){
+					alert('고등학교를 선택하세요.');
+					return;
+				}
+				
+				$('.schoolChangeName').text($("#hsSearch .choose").attr('hsclNm'));
+				$("#school #hsclNm").val($("#hsSearch .choose").attr('hsclNm'));
+				$("#school #hsclCd").val($("#hsSearch .choose").attr('hsclCd'));
+				closePopup('hsSearch');
+			}
+			
+			//접고 펼치기
+			function fnCmmBtnToggle(obj){
+				
+				if( $(obj).hasClass('_close') ){
+					$(obj).removeClass('_close');
+					$(obj).parent().parent().addClass('_close');
+				}else{
+					$(obj).addClass('_close');
+					$(obj).parent().parent().removeClass('_close');
+				}
+			}
+			
+			//학년명 저장
+			function updateHiddenInput(etcCn1Value) {
+			    $("#emhsGraSeCdNm").val(etcCn1Value);
+			}
+			
+			
+			/*
+				약관 동의여부 가져오기
+				utztnTrmsCd : 약관코드
+				sFnc        : 성공/동의 콜백함수
+				fFnc        : 실패/동의거부 콜백함수
+			    moveYn      : 동의거부시 메인페이지 이동여부 YN
+			*/
+			function fnGetTrmsAgre(utztnTrmsCd, sFnc, fFnc, moveYn){
+			    	
+				let formData = new FormData();
+				formData.append("utztnTrmsCd",utztnTrmsCd);
+				let popupClass = "trmsAgrePop_" + utztnTrmsCd;
+				
+				fn_axios.post("/mbs/jdm/trmsAgreYnAjax.do", formData, function (data) {
+			        if (data) {	
+			            if (data.trmsAgreYn === "Y") {
+			                if (typeof sFnc === "function") sFnc();
+			            } else {
+			                $(`#${popupClass}`).addClass("on");
+			                if (typeof sFnc === "function") window["trmsScsFnc_" + utztnTrmsCd] = sFnc; //동의 콜백함수
+			                if (typeof fFnc === "function") window["trmsFailFnc_" + utztnTrmsCd] = fFnc;//거부 콜백함수
+			                window["moveToMain_" + utztnTrmsCd] = moveYn; //거부시 메인페이지 이동여부
+			            }
+			        }
+			    });
+				
+			};
+			
+			/*
+				약관 동의 처리
+				utztnTrmsCd : 약관코드
+			*/
+			function fnTrmsAgre(utztnTrmsCd){
+				let formData = new FormData();
+				formData.append("utztnTrmsCd",utztnTrmsCd);
+				formData.append("trmsAgreYn","Y")
+				
+				let callBackFnc = window["trmsScsFnc_" + utztnTrmsCd];
+				let popupClass = "trmsAgrePop_" + utztnTrmsCd;
+				
+				fn_axios.post(
+						"/mbs/jdm/updateTrmsAgre.do"
+						, formData
+						, function(data){
+							if(data != null) {
+								closePopup(popupClass);
+								setTimeout(() => {
+									alert("약관 동의가 완료되었습니다.");
+									if(typeof callBackFnc === "function") callBackFnc();
+								}, 100)
+								
+							}
+						}
+				);
+				
+			};
+			
+			
+			/*
+				약관 동의거부 처리
+				utztnTrmsCd : 약관코드
+			*/
+			function fnTrmsDsag(utztnTrmsCd){
+				let moveToMain = window["moveToMain_" + utztnTrmsCd];
+				let popupClass = "trmsAgrePop_" + utztnTrmsCd;
+				let sgrdExisYn = ""; //성적존재여부
+				let callBackFnc = window["trmsFailFnc_" + utztnTrmsCd];
+
+				//성적 개인정보 수집 약관이고 저장된 성적 존재시 확인
+				if(utztnTrmsCd == "22" && sgrdExisYn == "Y"){
+					if (!confirm("성적 개인정보 수집 및 이용 동의를 거부 하실경우\n동의 철회로 간주하여, 등록되어있는 성적이 초기화됩니다.\n\n동의하지 않으시겠습니까?")) return;
+				}
+				
+				if(utztnTrmsCd == "22"){
+					let formData = new FormData();
+					formData.append("utztnTrmsCd", utztnTrmsCd);
+					formData.append("trmsAgreYn","N")
+					fn_axios.post(
+							"/mbs/jdm/updateTrmsAgre.do"
+							, formData
+							, function(data){
+								if(data != null) {
+									fnDsagCallBack(moveToMain, callBackFnc, popupClass);
+								}
+							}
+					)
+				}else{
+					fnDsagCallBack(moveToMain, callBackFnc, popupClass);
+				};
+		
+			};
+			
+			function fnTrmsPopClose(){
+				//대입상담폼은 팝업종료
+				if(window.location.pathname.indexOf("/uve/oca/onlineConseForm") > -1){
+					fnResetCsat();
+					closePopup("trmsAgrePop_22");
+				}else if(window.location.pathname.indexOf("/mpg/adh/adm/admissAsstView") > -1){
+					closePopup("trmsAgrePop_22");
+				}else{//메인페이지 이동
+					fnPageMove('/man/inf/mainView.do?menuId=PCMANINF1000');
+				}
+				
+			}
+			
+			function fnDsagCallBack(moveToMain, callBackFnc, popupClass){
+				if(moveToMain == "Y"){ //이동여부 Y일시 
+					fnPageMove('/man/inf/mainView.do?menuId=PCMANINF1000');
+				}else{
+					if(typeof callBackFnc === "function") callBackFnc();
+					closePopup(popupClass);
+				}
+			}
+			
+		</script>
+		
+		
+		
+			
+		<!-- 개인정보 수집 및 이용 선택동의 약관 -->
+		
+		<!-- 개인정보 수집 및 이용 선택동의 약관 -->
+		
+			
+	     
+	    
+	<div class="mbs loginForm06 withdrawalForm" >
+		<!-- 팝업 영역 -->
+		<div id="sample1" class="modPopup timePopupClass">
+			<!-- class - on : 팝업오픈 -->
+			<div class="popupDim">딤영역</div>
+			<div class="popupArea popup1Cont smPop registerPopup">
+				<div class="popupInMotion">
+					<div class="popupContainer">
+						<div class="popupContArea">
+							<div class="popTitleBox">
+								<h1 class="popTitle">자동로그아웃 안내</h1>
+<!-- 								<button class="popCloseBtn" onclick="closePopup('sample1');"> -->
+<!-- 									<span class="hidden">닫기</span> -->
+<!-- 								</button> -->
+							</div>
+	
+							<div class="popCont">
+								<!-- 팝업 컨텐츠 영역 -->
+								<div class="modDivision body1 reg">
+									<img src="/static/img/common/ico_nodata.png" alt="안내">
+									<p class="mT20 sclr01">
+										고객님의 안전한 웹사이트 사용을 위해 <br> 로그인 후 서비스 이용이 없어 로그아웃 됩니다.
+									</p>
+								</div>
+								<!-- //팝업 컨텐츠 영역 -->
+							</div>
+	
+							<div class="TimeCount">
+								<p class="tclr body1 reg">자동 로그아웃 까지</p>
+								<div class="timeBox">
+									<img src="/static/img/common/ico_logout.png" alt="시간">
+<!-- 									<p class="tclr body1 reg"> -->
+<!-- 										<span>1</span>분 -->
+<!-- 									</p> -->
+									<p class="tclr body1 reg">
+										<span class="timeSecClass">59</span>초
+									</p>
+								</div>
+							</div>
+							<p class="body3 sclr02 bottomInfo">로그인 시간을 연장할까요?</p>
+	
+							<div class="popBtm">
+								<button class="btnCTA  _default" onclick="fnLogout();">로그아웃</button>
+								<button class="btnCTA  _confirm" onclick="initSessionTime();closePopup('sample1');">연장하기</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- //팝업 영역 -->
+	</div>
+
+		<!-- <th:block th:replace="~{/cct/gde/beginnerGuideView :: popBeginnerGuide}"></th:block> -->
+		<div id="popDownloadProgram" class="modPopup"> <!-- class - on : 팝업오픈 -->
+	<div class="popupDim"></div>
+	<div class="popupArea popup1Cont smPop"><!-- 팝업 사이즈 컨트롤 : lgPop - 대 / mdPop - 중 / smPop - 소 / stPop 상태메시지 600x455 -->
+		<div class="popupInMotion">
+			<div class="popupContainer">
+				<div class="popupContArea">
+					<div class="popTitleBox">
+						<h1 class="popTitle">프로그램 다운로드</h1>
+						<button class="popCloseBtn" onclick="closePopup('popDownloadProgram');">
+							<span class="hidden">닫기</span>
+						</button>
+					</div>
+					<div class="popCont">
+						<!-- 팝업 컨텐츠 영역 -->
+						<div class="downloadProgramList">
+							<a href="https://www.adobe.com/kr/acrobat/pdf-reader.html" target="_blank" title="Adobe Reader XI" class="dnswAdobeReader">
+								<strong>Adobe Reader XI</strong>
+								<span>Adobe사의 PDF 파일 뷰어 프로그램</span>
+							</a>
+							<a href="https://www.hancom.com/cs_center/csDownload.do" target="_blank" title="Hancom Viewer" class="dnswHwpViewer">
+								<strong>Hancom 한글 Viewer</strong>
+								<span>한컴오피스 한글 뷰어 프로그램</span>
+							</a>
+						</div>
+						<!-- //팝업 컨텐츠 영역 -->
+					</div>
+					<div class="popBtm">
+						<button type="button" class="btnCTA _confirm" onclick="closePopup('popDownloadProgram');"><span>확인</span></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+		<div id="popRemoteService" class="modPopup"> <!-- class - on : 팝업오픈 -->
+		<div class="popupDim"></div>
+		<div class="popupArea popup1Cont mdPop"><!-- 팝업 사이즈 컨트롤 : lgPop - 대 / mdPop - 중 / smPop - 소 / stPop 상태메시지 600x455 -->
+			<div class="popupInMotion">
+				<div class="popupContainer">
+					<div class="popupContArea">
+						<div class="popTitleBox">
+							<h1 class="popTitle">원격지원서비스</h1>
+							<button class="popCloseBtn" onclick="closePopup('popRemoteService');">
+								<span class="hidden">닫기</span>
+							</button>
+						</div>
+						<div class="popCont">
+							<!-- 팝업 컨텐츠 영역 -->
+							<div class="modDivision incScr">
+								<div class="dvsItem">
+									<div class="hgroup">
+										<h2>원격 진행 순서</h2>
+										<p class="refMark">원격지원서비스를 이용하여 편리하게 문제를 해결하실 수 있습니다.</p>
+									</div>
+									<ol class="popRemoteStep">
+										<li>전화상담</li>
+										<li>지원사이트 접속</li>
+										<li>접속정보 입력</li>
+										<li>원격지원</li>
+									</ol>
+									<ol class="listNoGrGg">
+										<li><span class="marker">1</span>기술지원 상담원을 전화상으로 호출합니다.
+											<p class="sm">업무 문의 : 02-6919-3960</p>
+										</li>
+										<li><span class="marker">2</span>원격지원서비스 링크로 이동합니다.</li>
+										<li><span class="marker">3</span>고객이름 및 접속번호 를 입력 후 원격지원을 받습니다.</li>
+									</ol>
+								</div>
+							</div>
+							<!-- //팝업 컨텐츠 영역 -->
+						</div>
+						<div class="popBtm">
+							<button type="button" class="btnCTA _confirm" onclick="fnOpenNewUrl('https://remote.adiga.kr/')"><span>원격 지원서비스 바로가기</span></button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	     
+
+</body>
+
+</html>

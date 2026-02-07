@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 from core.base_scraper import BaseScraper
 from models.article import Article
 
-class AdigaScraper(BaseScraper):
+class AdigaProperScraper(BaseScraper):
     def __init__(self, config: Dict[str, Any]):
         config['url'] = "https://www.adiga.kr"
         
