@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""
+Telegram formatter with better instructions for Adiga navigation
+"""
+import requests
+import sys
+import os
+import html
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from config import BOT_TOKEN, CHAT_ID
+    HAS_TELEGRAM_CONFIG = True
+except ImportError:
+    HAS_TELEGRAM_CONFIG = False
+    BOT_TOKEN = None
+    CHAT_ID = None
+
+
+def escape_html(text):
+    if not text:
+        return ""
+    text = html.escape(text)
+    text = text.replace('"', '&quot;')
+    text = text.replace("'", '&apos;')
+    return text
+
+
+def format_telegram_message(title, content, url, department="general", article_id=None):
+    department_emojis = {
+        'music': '🎵',
+        'korean': '📚', 
+        'english': '🔤',
+        'liberal': '📖',
+        'general': '🎓'
+    }
+    
+    emoji = department_emojis.get(department, '🎓')
+    
+    safe_title = escape_html(title)
+    safe_content = escape_html(content)
+    safe_url = escape_html(url)
+    
+    # Truncate content
+    if safe_content and len(safe_content) > 250:
+        safe_content = safe_content[:250] + "..."
+    
+    # Format message
+    message = f"{emoji} <b>[새 입학 공고] {safe_title}</b>\n\n"
+    
+    if department != 'general':
+        safe_department = escape_html(department)
+        message += f"📌 <b>부서/학과</b>: {safe_department}\n"
+    
+    if safe_content:
+        message += f"📝 <b>내용</b>: {safe_content}\n"
+    
+    message += f"🔗 <b>링크</b>: {safe_url}\n"
+    
+    # ADD NAVIGATION INSTRUCTIONS FOR ADIGA
+    if article_id and 'adiga.kr' in url:
+        message += f"\n⚠ <b>Adiga.kr 페이지 안내:</b>\n"
+        message += f"1. 링크 클릭 후 페이지 로딩 대기\n"
+        message += f"2. '공통' 카테고리에서 기사 선택\n"
+        message += f"3. JavaScript가 활성화되어야 함\n"
+        message += f"4. 기사 ID: {article_id}\n"
+    
+    # Add hashtags
+    message += f"\n#대학입시"
+    if department != 'general':
+        message += f" #{department}"
+    
+    return message
+
+def format_program(program_data):
+    # Use telegram_title if available (for Adiga compatibility)
+    telegram_title = program_data.get('telegram_title')
+    if telegram_title:
+        title = telegram_title
+    else:
+        title = program_data.get('title', 'No Title')
+    
+    content = program_data.get('content', '')
+    url = program_data.get('url', '')
+    
+    department = program_data.get('department', 'general')
+    if isinstance(department, dict):
+        department = department.get('name', 'general')
+    
+    # Extract article ID
+    article_id = None
+    metadata = program_data.get('metadata', {})
+    if 'article_id' in metadata:
+        article_id = metadata['article_id']
+    elif 'adiga_' in program_data.get('id', ''):
+        article_id = program_data.get('id', '').replace('adiga_', '')
+    
+    return format_telegram_message(title, content, url, department, article_id)
+
+
+def send_telegram_message(message, parse_mode="HTML"):
+    if not HAS_TELEGRAM_CONFIG:
+        print("⚠ Telegram config not available")
+        return False
+    
+    if not BOT_TOKEN or not CHAT_ID:
+        print("⚠ Telegram credentials not set")
+        return False
+    
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": CHAT_ID,
+            "text": message,
+            "parse_mode": parse_mode,
+            "disable_web_page_preview": False
+        }
+        
+        response = requests.post(url, json=payload, timeout=10)
+        
+        if response.status_code == 200:
+            print(f"✅ Telegram message sent successfully")
+            return True
+        else:
+            print(f"❌ Telegram API error: {response.status_code} - {response.text}")
+            return False
+            
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Telegram request error: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ Unexpected Telegram error: {e}")
+        return False
+
+
+format_message = format_telegram_message
+
+
+class TelegramFormatter:
+    def __init__(self):
+        pass
+    
+    def format_message(self, title, content, url, department="general"):
+        return format_telegram_message(title, content, url, department)
+    
+    def format_program(self, program_data):
+        return format_program(program_data)
+
+
+# Test
+if __name__ == "__main__":
+    print("Testing Telegram Formatter with Navigation Instructions")
+    print("=" * 60)
+    
+    test_article = {
+        'id': 'adiga_26546',
+        'title': '서울대학교 음악학과 추가모집',
+        'content': '서울대학교 음악학과에서 2026학년도 추가모집을 실시합니다.',
+        'url': 'https://www.adiga.kr/uct/nmg/enw/newsDetail.do?prtlBbsId=26546',
+        'department': 'music',
+        'metadata': {'article_id': '26546'}
+    }
+    
+    formatter = TelegramFormatter()
+    message = formatter.format_program(test_article)
+    
+    print("\nFormatted message:")
+    print("=" * 60)
+    print(message)
+    print("=" * 60)
+    print(f"Length: {len(message)} chars")
+    print(f"Contains navigation instructions: {'Adiga.kr 페이지 안내' in message}")

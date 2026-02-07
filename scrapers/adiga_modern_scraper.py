@@ -21,7 +21,7 @@ class ModernAdigaScraper(BaseScraper):
     def __init__(self, config: Dict[str, Any] = None):
         config = config or {
             'name': 'adiga',
-            'base_url': 'https://adiga.kr',
+            'base_url': 'https://www.adiga.kr',
             'html_file_path': 'adiga_structure.html',
             'max_articles': 20,
             'display_name': 'Adiga (어디가)',
@@ -392,7 +392,7 @@ class LegacyAdigaScraper:
     def __init__(self):
         config = {
             'name': 'adiga',
-            'base_url': 'https://adiga.kr',
+            'base_url': 'https://www.adiga.kr',
             'html_file_path': 'adiga_structure.html',
             'max_articles': 20,
             'display_name': 'Adiga (어디가)',

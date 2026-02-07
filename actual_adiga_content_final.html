@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta charset="UTF-8">
+	<meta name="_csrf" content="be40ccac-1ecb-4c0b-a651-9b8931ed5896">
+	<meta name="_csrf_header" content="X-CSRF-TOKEN">
+	
+	<meta property="og:title" content="대입정보포털" />
+	<meta property="og:type" content="website" />	
+	<meta property="og:url" content="https://adiga.kr" />
+	<meta property="og:image" content="https://adiga.kr/static/img/og_adiga.png" />	
+	<meta property="og:description" content="adiga, 대입정보포털, 어디가, 대학입학정보" />
+<!-- 	<meta name="google-site-verification" content="QN-LXaoviPTTzOiXUR2crIUH4XNJJWwUH5Jg4R3fhys" /> -->
+	<title>대입정보포털</title>
+	
+	<link rel="manifest" href="/adiga.manifest">
+	<link rel="shortcut icon" type="image/x-icon" href="/static/img/favicon/favicon.ico">
+	<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon/favicon-16x16.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon/favicon-32x32.png">	
+	<link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon/favicon-96x96.png">	
+	<link rel="icon" type="image/png" sizes="144x144" href="/static/img/favicon/ms-icon-144x144.png">	
+	<link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon/android-icon-192x192.png">	
+	
+	<link rel="apple-touch-icon-precomposed" href="/static/img/favicon/apple-icon-114x114.png">	
+	<link rel="apple-touch-icon" sizes="57x57" href="/static/img/favicon/apple-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="/static/img/favicon/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/static/img/favicon/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="/static/img/favicon/apple-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/static/img/favicon/apple-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="/static/img/favicon/apple-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/static/img/favicon/apple-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/static/img/favicon/apple-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/static/img/favicon/apple-icon-180x180.png">
+	
+	<!-- css -->
+	<link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.min.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/swiper.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/default.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/common.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/sub.css" />
+	<link rel="stylesheet" type="text/css" href="/static/css/rMateChartH5.css" />
+	
+	<!-- Jquery -->
+	<script src="/static/js/jquery/jquery-3.7.0.min.js"></script>
+	<script src="/static/js/jquery/jquery-ui.min.js"></script>
+	<script src="/static/js/jquery/jquery.blockUI.min.js"></script>
+	<script src="/static/js/jquery/jquery.i18n.properties.min.js"></script>
+	<script src="/static/js/comm/swiper.js"></script>
+	<script src="/static/js/comm/common.js"></script>
+	<script src="/static/js/comm/devCommon.js?v=20250729"></script>
+	<script src="/static/js/guide/common.js?v=20241203"></script>	
+	<!-- <script src="/static/js/comm/scoSca.js"></script> -->
+	
+	<!-- axios -->
+	<script src="/static/js/axios/axios.min.js"></script>
+	<script src="/static/js/axios/axiosCommon.js"></script>
+	
+	<!-- 개별 script load -->
+	
+
+	<link rel="stylesheet" href="/static/css/main.css" />
+	<!-- <script src="/static/js/comm/swiper.js"></script>  -->
+	
+
+	
+	<!-- 개별 업무 script -->
+	
+    <script src="/static/js/rMateChartH5/rMateChartH5License.js"></script>
+    <script src="/static/js/rMateChartH5/rMateIntegrationH5.js"></script>
+    <script src="/static/js/rMateChartH5/theme.min.js"></script>	
+	<script src="/static/js/comm/app.js"></script>
+	<script src="/static/js/comm/scoSca.js"></script> 
+		
+	
+		<script >
+		$(document).ready(function(){
+			fnNewsList(); // 대입뉴스 조회
+			slideCall();
+			// 로그인 시 영역 변경
+			var user = "";
+			if(user != ""){
+				$(".beforeLogin").hide();
+				$(".afterLogin").show();
+				
+				$(".mainInfoCont01").addClass("loginInfoBox");
+				
+				/* 성적분석/진로정보 기본 영역 설정 */
+				fnAnlsJobAreaSetting();
+
+				slideCall();
+			}
+		}); /* JH Code */
+			
+			
+			/* input 생성 및 form add 함수 */
+			function fnMakeHiddInputFrmAdd(formId, inputName, inputValue){
+				$('#'+formId).append($('<input>', {
+						type: 'hidden',
+						name: inputName,
+						value: inputValue 
+					})
+				);
+			}
+			
+			/* 게시글 상세페이지 이동 함수 */
+			function fnMoveDetail(type, detailSn, detailSn_2, detailSn_3){
+				//폼 초기화
+				$("#linkFrm").empty();	
+				
+				//csrf
+				var form = document.getElementById("linkFrm");
+				var mapInput = document.createElement("input");
+				mapInput.type = 'hidden';
+			    mapInput.name = '_csrf';
+			    mapInput.value = $("meta[name='_csrf']").attr("content");
+			    form.appendChild(mapInput);
+			    
+				switch(type) {
+					case 'notice':	//공지사항
+							// 조회수 증가 후 페이지이동
+							fnBoardInqCnt(detailSn, function(){
+								fnMakeHiddInputFrmAdd('linkFrm','prtlBbsId', detailSn);
+								fnMakeHiddInputFrmAdd('linkFrm','menuId', 'PCCCTPBF1000');
+								$('#linkFrm').attr("method","GET");
+								$('#linkFrm').attr("action","/cct/pbf/noticeDetail.do");
+								$('#linkFrm').submit();
+							});	
+						break;
+					case 'news':	//대입뉴스
+							// 조회수 증가 후 페이지이동
+							fnBoardInqCnt(detailSn, function(){
+								var formData = new FormData();
+								formData.append("prtlBbsId", detailSn);
+								fn_axios.post(
+									"/uct/nmg/enw/newsDetail.do"
+									, formData
+									, function(fragment) {
+										$('#newsDetail .popCont').replaceWith(fragment);
+										openPopup('newsDetail');
+									}
+								);
+							});	
+						break;
+					case 'archive':	//대입전략자료실
+							// 조회수 증가 후 페이지이동
+							fnBoardInqCnt(detailSn, function(){
+								var formData = new FormData();
+								formData.append("prtlBbsId", detailSn);
+								fn_axios.post(
+									"/uct/ces/archiveDetail.do"
+									, formData
+									, function(fragment){
+										$('#archiveDetail .popCont').replaceWith(fragment);
+										openPopup('archiveDetail');
+										
+										//대입전략자료실 > 상세 > 키워드 검색 클릭 이벤트 변경
+										$('#archiveDetail').find('ul.keyWords li a').each((i, e) => {
+											$(e).attr('onclick', '').unbind('click', 'fnSearchKeyword');	
+											$(e).click(function () {
+												fnMakeHiddInputFrmAdd('linkFrm','searchKey', 'searchkwrdCn');				//키워드 검색
+												fnMakeHiddInputFrmAdd('linkFrm','searchWord', $(e).text().substring(1));	//키워드 값
+												$('#linkFrm').attr("action","/uct/ces/archiveView.do?menuId=PCUCTCES1000");
+												$('#linkFrm').submit();
+											});
+										});
+										
+										//대입전략자료실 > 상세 > 키워드 슬라이드
+										new Swiper(".keywordsSlide", {
+											slidesPerView: "auto",
+											centeredSlides:false,
+											spaceBetween: 9,
+											pagination : false,
+											loop:false, 
+											slidesPerGroup : 2,
+											allowTouchMove: false,
+											navigation: {
+												nextEl: ".keySlideNext",
+												prevEl: ".keySlidePrev",
+											}
+										});
+									}
+								);
+							});	
+						break;
+					case 'univInfo':	//일반 - 대학정보 상세
+							fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);			//대학코드
+							fnMakeHiddInputFrmAdd('linkFrm','searchSyr',detailSn_2);	//검색년도
+							$('#linkFrm').attr("action","/ucp/uvt/uni/univDetail.do?menuId=PCUVTINF2000");
+							$('#linkFrm').submit();
+						break;
+					case 'univClsInfo': //일반 - 학과정보 상세
+							fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);		//대학코드
+							fnMakeHiddInputFrmAdd('linkFrm','searchSyr', detailSn_2);	//검색년도
+							fnMakeHiddInputFrmAdd('linkFrm','ruCd', detailSn_3);		//학과코드
+							$('#linkFrm').attr("action","/ucp/cls/uni/classUnivDetail.do?menuId=PCCLSINF2000");
+							$('#linkFrm').submit();
+						break;
+					case 'colInfo':	//전문 - 대학정보 상세
+							fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);			//대학코드
+							fnMakeHiddInputFrmAdd('linkFrm','searchSyr',detailSn_2);	//검색년도
+							$('#linkFrm').attr("action","/ucp/uvt/col/collDetail.do?menuId=PCUVTINF3000");
+							$('#linkFrm').submit();
+						break;
+					case 'colClsInfo': //전문 - 학과정보 상세
+						fnMakeHiddInputFrmAdd('linkFrm','unvCd', detailSn);		//대학코드
+						fnMakeHiddInputFrmAdd('linkFrm','searchSyr', detailSn_2);	//검색년도
+						fnMakeHiddInputFrmAdd('linkFrm','ruCd', detailSn_3);		//학과코드
+						$('#linkFrm').attr("action","/ucp/cls/col/classColDetail.do?menuId=PCCLSINF3000");
+						$('#linkFrm').submit();
+						break;
+					case 'jobInfo': //직업정보
+						fnMakeHiddInputFrmAdd('linkFrm','searchCrCd', detailSn);
+						$('#linkFrm').attr("action","/jbp/jnf/jobInfoDetail.do?menuId=PCJBPJNF2000");
+						$('#linkFrm').submit();
+						break;
+					case 'event': // 대학별 행사안내
+						fnMakeHiddInputFrmAdd('linkFrm','evntSn', detailSn);
+						$('#linkFrm').attr("action","/uct/gdf/univEventDetail.do?menuId=PCUCTGDF1000");
+						$('#linkFrm').submit();
+						break;
+					case 'qna': // Q&A
+						// 조회수 증가 후 페이지이동
+				        fnAnsBoardInqCnt(detailSn, function(){
+				        	fnMakeHiddInputFrmAdd('linkFrm','ansBbsId', detailSn);
+							$('#linkFrm').attr("action","/cct/fqr/qna/qnaDetail.do?menuId=PCCCTFQR2001");
+							$('#linkFrm').submit();
+				        });	
+						break;
+					case 'propse': // 제안 및 건의하기
+						// 조회수 증가 후 페이지이동
+				        fnAnsBoardInqCnt(detailSn, function(){
+				        	fnMakeHiddInputFrmAdd('linkFrm','ansBbsId', detailSn);
+							$('#linkFrm').attr("action","/mpg/apl/receptionHistDetail.do?menuId=PCMPGAPL3001");
+							$('#linkFrm').submit();
+				        });	
+						break;
+					case 'conse': // 상담내역
+						// 조회수 증가 후 페이지이동
+				        fnAnsBoardInqCnt(detailSn, function(){
+							fnMakeHiddInputFrmAdd('linkFrm','ansBbsId', detailSn);
+							$('#linkFrm').attr("action","/uve/oca/onlineConseDetail.do?menuId=PCUVEOCA1000");
+							$('#linkFrm').submit();
+				        });	
+						break;
+					case 'magazine': //대입정보 매거진
+						var openNewWindow = window.open("about:blank");
+						openNewWindow.location.href = detailSn;
+						break;
+					case 'adigaTV' : //어디가TV
+						if (!detailSn) {
+							return false;
+						}
+						var formData = new FormData();
+						formData.append("contsId", detailSn);
+						fn_axios.post(
+								"/uct/nmg/gtv/adigaTvDetail.do"
+								, formData
+								, function(fragment) {
+									$('#adigaTvDetail .popCont').replaceWith(fragment);
+									openPopup('adigaTvDetail');
+								}
+							);
+						break;
+				}
+			}
+			
+			/* 대입뉴스 조회 */
+			function fnNewsList(){
+				fnInfoCenterLinkChg("/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"); //대입주요자료 더보기 링크변경
+				
+		   		fn_axios.post(
+					"/man/inf/mainNewsLstAjax.do"
+					, ""
+					, function(fragment){
+						$('#newsList').replaceWith(fragment);
+						$("#newsList").css("display","block");
+					}
+				);
+			}
+			
+			/* 대입전략자료실 조회 */
+			function fnArchiveList(){
+				fnInfoCenterLinkChg("/uct/ces/archiveView.do?menuId=PCUCTCES1000"); //대입주요자료 더보기 링크변경
+				
+		   		fn_axios.post(
+					"/man/inf/mainArchiveLstAjax.do"
+					, ""
+					, function(fragment){
+						$('#archiveList').replaceWith(fragment);
+						$("#archiveList").css("display","block");
+					}
+				);
+			}
+			
+			/* 대입용어사전 조회 */
+			function fnLibList(){
+				fnInfoCenterLinkChg("/uct/asi/dct/glossaryView.do?menuId=PCUCTASI3100"); //대입주요자료 더보기 링크변경
+				$("#libList").css("display","block");
+			}
+			
+			/* 주요입시용어 조회 */
+			function fnTermList(){
+				fnInfoCenterLinkChg("/uct/asi/met/mainEtenTrmyView.do?menuId=PCUCTASI4100"); //대입주요자료 더보기 링크변경
+			}
+			
+			/* 대입정보매거진 조회 */
+			function fnMagazineList(){
+				fn_axios.post(
+						"/man/inf/mainMagazineLstAjax.do"
+						, ""
+						, function(fragment){
+							$('#magazineList').replaceWith(fragment);
+						}
+					);
+			}
+			
+			/* AdigaTv 조회 */
+			function fnAdigaTvList(){
+				fn_axios.post(
+   					"/man/inf/mainAdigaTvLstAjax.do"
+   					, ""
+   					, function(fragment){
+   						$('#adigaTvList').replaceWith(fragment);
+   					}
+   				);
+			}
+			
+			/* 로그인 영역 메뉴 선택함수 */
+			function fnLoginAreaMenu(type) {
+				switch (type) {
+					case 'admss':
+						fnAdmssUnivList('unv');
+						fnAdmssUnivList('col');
+						$('.tabIntab ul li a').removeClass('on');
+						$('.moCont01 .tabIntab ul li').eq(0).children('a').addClass('on');
+						break;
+					case 'univ':
+						fnInterestUnivList('unv');
+						fnInterestUnivList('col');
+						$('.tabIntab ul li a').removeClass('on');
+						$('.moCont02 .tabIntab ul li').eq(0).children('a').addClass('on');
+						break;
+					case 'job':
+						fnInterestJobList();
+						break;
+					case 'conse':
+						fnConseList();
+						break;
+					case 'reception':
+						fnReceptionList('pgm');
+						fnReceptionList('qna');
+						fnReceptionList('propse');
+						$('.tabIntab ul li a').removeClass('on');
+						$('.moCont05 .tabIntab ul li').eq(0).children('a').addClass('on');
+						break;
+					case 'schedule':
+						fnScheduleList();
+						break;
+				}
+			}
+			
+			/* 관심전형 상세 탭 조회 함수 */
+			function fnAdmssUnivList(type) {
+				switch (type) {
+					case 'unv':
+						fn_axios.post(
+							"/man/inf/mainAdmssUnivLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#admssUnivList').replaceWith(fragment);
+								$("#admssUnivList").css("display","block");
+							}
+						);
+						break;
+					case 'col':
+						fn_axios.post(
+							"/man/inf/mainAdmssColLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#admssColList').replaceWith(fragment);
+								$("#admssColList").css("display","none");
+							}
+						);
+						break;
+				}
+			}
+			
+			/* 관심대학 상세 탭 조회 함수 */
+			function fnInterestUnivList(type) {
+				switch (type) {
+					case 'unv':
+						fn_axios.post(
+							"/man/inf/mainUnivLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#interestUnivList').replaceWith(fragment);
+								$("#interestUnivList").css("display","block");
+							}
+						);
+						break;
+					case 'col':
+						fn_axios.post(
+							"/man/inf/mainColLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#interestColList').replaceWith(fragment);
+								$("#interestColList").css("display","none");
+							}
+						);
+						break;
+				}
+			}
+			
+			/* 관심진로 상세 탭 조회 함수 */
+			function fnInterestJobList(){
+				fn_axios.post(
+   					"/man/inf/mainJobLstAjax.do"
+   					, ""
+   					, function(fragment){
+   						$('#interestJobList').replaceWith(fragment);
+   						$("#interestJobList").css("display","block");
+   					}
+   				);
+			}
+			
+			/* 신청/접수 상세 탭 조회 함수 */
+			function fnReceptionList(type) {
+				switch (type) {
+					case 'pgm':
+						fn_axios.post(
+							"/man/inf/mainPgmLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#pgmList').replaceWith(fragment);
+								$("#pgmList").css("display","block");
+							}
+						);
+						break;
+					case 'qna':
+						fn_axios.post(
+							"/man/inf/mainQnaLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#qnaList').replaceWith(fragment);
+								$("#qnaList").css("display","none");
+							}
+						);
+						break;
+					case 'propse':
+						fn_axios.post(
+							"/man/inf/mainPropseLstAjax.do"
+							, ""
+							, function(fragment){
+								$('#propseList').replaceWith(fragment);
+								$("#propseList").css("display","none");
+							}
+						);
+						break;
+				}
+			}
+			
+			/* 나의일정 조회 함수 */
+			function fnScheduleList(move = 0){
+
+				$('#searchMoveMonth').val(move);
+				
+				fn_axios.post(
+   					"/man/inf/mainScheduleLstAjax.do"
+   					, $("#scheduleFrm").serialize()
+   					, function(fragment){
+   						$('#scheduleList').replaceWith(fragment);
+   						$("#scheduleList").css("display","block");
+   					}
+   				);
+			}
+		  	
+			/* 상담내역 상세 탭 조회 함수 */
+			function fnConseList(){
+				fn_axios.post(
+   					"/man/inf/mainConseLstAjax.do"
+   					, ""
+   					, function(fragment){
+   						$('#conseList').replaceWith(fragment);
+   						$("#conseList").css("display","block");
+   					}
+   				);
+			}
+			
+			/* 진로정보 검색 함수 */
+			function fnSearchJobInfo() {
+				const searchType = $("#searchType").val();
+				
+				if(searchType === "K") {
+					if ($("#searchKeyword").val().length < 2) {
+						alert(i18nMessage('errors.code.invalid-parameter.minlength', '검색어', 2));
+						$("input#searchKeyword").focus();
+						return false;
+					}
+				}else if(searchType === "C"){
+					if ($("#searchAvgSal").val() == '' && $("#searchProspect").val() == '') {
+						alert(i18nMessage('errors.code.invalid-parameter.select.required', '검색조건'));
+						return false;
+					}
+				}else{
+					return false;
+				}
+				
+				$('#jobInfoFrm').attr("action","/jbp/jnf/jobInfoView.do?menuId=PCJBPJNF2000");
+				$("#jobInfoFrm").submit();
+			}
+			
+			/* 진로정보 selectBox 변경 함수 */
+			function fnJobTypeChange(_this, value, text1, text2){
+				fnSelTypeSet(_this, value); // select Box UI 작동
+				if(value === "K"){
+					$("#kArea").css("display",'flex');
+					$("#cArea").css("display",'none');
+				}else if(value === "C"){
+					$("#kArea").css("display",'none');
+					$("#cArea").css("display",'flex');
+				}
+			}
+			
+			/* 성적분석/진로정보 탭 이동 함수 */
+			function fnAnlsJobTab(_this){
+				var micIdx = $(_this).parents("li").index();
+				$(".micTitBox ul li").removeClass("on")
+				$(_this).parent("li").addClass("on")
+				$(".micTabCov > div").hide();
+				$(".micTabCov > div").eq(micIdx).show();
+				if($(_this).attr("id") === "anisTab"){
+					$("#left1Text").text("학생부,수능/모의고사 성적을 원하는 전형조건으로 분석해 드립니다.");
+				}else{
+					$("#left1Text").text("내 꿈에 더 가까운 직업정보를 확인하세요!");
+				}
+			}
+			
+			/* 성적분석/진로정보 탭 기본설정 함수 */
+			function fnAnlsJobDefault(type){
+				if(type === "jobInfoArea"){
+					//진로정보
+					$("#jobTab").trigger("click");
+					
+				}else if(type === "anlsInsertArea"){
+					//성적분석 등록
+					$("#anlsInsertArea").show();
+					$("#anlsGrpArea").hide();
+					$("#anlsTab").trigger("click");
+					
+				}else if(type === "anlsGrpArea"){
+					//성적분석 그래프
+					$("#anlsInsertArea").hide();
+					$("#anlsGrpArea").show();
+					$("#anlsTab").trigger("click");
+				}
+			}
+			
+			/* 성적분석/진로정보 기본 영역 설정 */
+			function fnAnlsJobAreaSetting() {
+				/* 성적분석/진로정보 기본 영역 설정 */
+				var anisInsertYn = "N"; //학생부 성적 등록여부
+				var emhsGraSeCd = "";
+				var userClsfCd = "";
+				var resultTab = "jobInfoArea";
+				switch (userClsfCd) {
+				case '1': // 학생
+					if(emhsGraSeCd == '10'){ //고3
+						if(anisInsertYn === "Y"){
+							resultTab ='anlsGrpArea'; //성적입력 O
+							fnAnlsGrpTab('1');
+						}else{
+							resultTab = 'anlsInsertArea'; //성적입력 X
+						}
+					}else{ //고3 제외
+						if(anisInsertYn === "Y"){
+							resultTab = 'anlsGrpArea'; //성적입력 O
+							fnAnlsGrpTab('1');
+						}else{
+							resultTab = 'jobInfoArea'; //성적입력 X			 
+							$("#anlsInsertArea").show();
+							$("#anlsGrpArea").hide();
+						}
+					}
+					break;
+				case '2': // 학부모
+					if(anisInsertYn === "Y"){
+						resultTab ='anlsGrpArea'; //성적입력 O
+						fnAnlsGrpTab('1');
+					}else{
+						resultTab = 'anlsInsertArea'; //성적입력 X
+					}
+					break;
+				case '3': // 기타
+					if(anisInsertYn === "Y"){
+						resultTab ='anlsGrpArea'; //성적입력 O
+						fnAnlsGrpTab('1');
+					}else{
+						resultTab = 'anlsInsertArea'; //성적입력 X
+					}
+					break;
+				}
+				
+				fnAnlsJobDefault(resultTab);
+			}
+			
+			/* 성적분석 상세 탭 클릭 함수 */
+			function fnAnlsGrpTab(type,_this){
+				$(_this).parent().children('li').removeClass('on');
+				$(_this).addClass('on');
+				if(type == '1'){
+					if(document.getElementById("se

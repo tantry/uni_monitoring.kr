@@ -11,10 +11,10 @@ import os
 class AdigaScraper:
     def __init__(self):
         self.source_name = "Adiga (어디가)"
-        self.base_url = "https://adiga.kr"
+        self.base_url = "https://www.adiga.kr"
         self.source_config = {
             'name': 'Adiga',
-            'base_url': 'https://adiga.kr',
+            'base_url': 'https://www.adiga.kr',
             'type': 'university_admission'
         }
         # Simulate BaseScraper behavior
@@ -152,7 +152,7 @@ class AdigaScraper:
             {
                 'title': '[입시의 정석] 정시 등록 오늘부터…이중 등록 유의해야',
                 'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인.',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=26546',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=26546',
                 'article_id': '26546',
                 'source': self.source_name,
                 'id': 'adiga_26546',

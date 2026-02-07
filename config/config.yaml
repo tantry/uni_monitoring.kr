@@ -1,0 +1,8 @@
+telegram:
+  bot_token: "8537135583:AAFyI8788KM7CpAs5YNH6kdQnCuQ8bM2gec"
+  chat_id: "440747849"
+database:
+  path: "data/state.db"
+logging:
+  level: "INFO"
+  file: "logs/monitor.log"

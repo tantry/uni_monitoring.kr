@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Insert title here</title>
+<script type="text/javascript">
+	
+	function Mobile(){
+		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+		}
+	
+	function main(){
+		   if (Mobile()){// 모바일일 경우
+			   location.href = "https://m.adiga.kr/";
+		    } else {// 모바일 외
+		    	location.href = "/man/inf/mainView.do?menuId=PCMANINF1000";
+		    }
+	}
+</script>
+</head>
+<body onload="main();"></body>
+</html>

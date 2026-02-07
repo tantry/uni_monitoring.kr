@@ -21,15 +21,15 @@ class AdigaScraper(BaseScraper):
         except:
             source_config = {
                 'name': 'Adiga',
-                'base_url': 'https://adiga.kr',
-                'search_url': 'https://adiga.kr/ArticleSearchList.do'
+                'base_url': 'https://www.adiga.kr',
+                'search_url': 'https://www.adiga.kr/ArticleSearchList.do'
             }
         
         super().__init__(
             source_name="Adiga (어디가)",
             source_config=source_config
         )
-        self.base_url = source_config.get('base_url', 'https://adiga.kr')
+        self.base_url = source_config.get('base_url', 'https://www.adiga.kr')
     
     def scrape(self):
         """Main scraping method"""
@@ -154,7 +154,7 @@ class AdigaScraper(BaseScraper):
                 'department': 'general',
                 'deadline': '정보 없음',
                 'content': '정시 등록이 시작되었습니다. 대학별 등록 마감일에 유의하세요.',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=26546',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=26546',
                 'source': self.source_name,
                 'metadata': '2026 | 공통 | 대입상담센터',
                 'scraped_at': datetime.now().isoformat()
@@ -166,7 +166,7 @@ class AdigaScraper(BaseScraper):
                 'department': 'general',
                 'deadline': '정보 없음',
                 'content': '창의적 체험활동, 학생부 종합전형, 학교생활기록부 행특 설명',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=26545',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=26545',
                 'source': self.source_name,
                 'metadata': '2026 | 공통 | 대입상담센터',
                 'scraped_at': datetime.now().isoformat()

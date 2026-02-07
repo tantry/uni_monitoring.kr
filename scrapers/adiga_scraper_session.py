@@ -28,7 +28,7 @@ class AdigaScraper(BaseScraper):
         if config is None:
             config = {
                 'name': 'adiga',
-                'base_url': 'https://adiga.kr',
+                'base_url': 'https://www.adiga.kr',
                 'html_file_path': 'adiga_structure.html',
                 'max_articles': 10,
                 'display_name': 'Adiga Session (어디가)',
@@ -38,7 +38,7 @@ class AdigaScraper(BaseScraper):
         
         base_config = {
             'name': config.get('name', 'adiga'),
-            'base_url': config.get('base_url', 'https://adiga.kr'),
+            'base_url': config.get('base_url', 'https://www.adiga.kr'),
             'timeout': config.get('timeout', 30),
             'retry_attempts': config.get('retry_attempts', 3)
         }
@@ -76,7 +76,7 @@ class AdigaScraper(BaseScraper):
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Connection': 'keep-alive',
                 'Upgrade-Insecure-Requests': '1',
-                'Referer': 'https://adiga.kr/',
+                'Referer': 'https://www.adiga.kr/',
             })
             self.logger.debug("Created new requests session")
         return self._session
@@ -420,7 +420,7 @@ class AdigaScraper(BaseScraper):
             {
                 'title': '[입시의 정석] 정시 등록 오늘부터…이중 등록 유의해야',
                 'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인.',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=26546',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=26546',
                 'article_id': '26546',
                 'is_live_scrape': False,
                 'metadata': {
@@ -446,7 +446,7 @@ class LegacyAdigaScraper:
     def __init__(self):
         config = {
             'name': 'adiga',
-            'base_url': 'https://adiga.kr',
+            'base_url': 'https://www.adiga.kr',
             'html_file_path': 'adiga_structure.html',
             'max_articles': 10,
             'display_name': 'Adiga Session (어디가)',

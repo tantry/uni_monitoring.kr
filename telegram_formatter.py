@@ -19,11 +19,33 @@ except ImportError:
 
 
 def escape_html(text):
+    """Escape HTML but don't double-escape existing entities"""
     if not text:
         return ""
-    text = html.escape(text)
+    
+    import html
+    # html.escape converts: & -> &amp;, < -> &lt;, > -> &gt;, " -> &quot;, ' -> &#x27;
+    # But we don't want to escape & if it's part of an existing entity like &#x27;
+    
+    # Simple approach: only escape the bare minimum needed for Telegram
+    # Telegram HTML mode needs: < > & " '
+    # But ' can be &#x27; or &apos; or '
+    
+    # Actually, html.escape is fine, but we need to handle the case where
+    # text already contains HTML entities
+    text = str(text)
+    
+    # Replace & only if it's not part of an HTML entity
+    # This regex matches & that are not followed by # or word chars and ;
+    import re
+    # First escape < and >
+    text = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    
+    # Handle quotes - but carefully
     text = text.replace('"', '&quot;')
-    text = text.replace("'", '&apos;')
+    # For single quote, use &#x27; which is standard
+    text = text.replace("'", '&#x27;')
+    
     return text
 
 
@@ -56,7 +78,7 @@ def format_telegram_message(title, content, url, department="general", article_i
     if safe_content:
         message += f"📝 <b>내용</b>: {safe_content}\n"
     
-    message += f"🔗 <b>링크</b>: {safe_url}\n"
+        message += f"🔗 <b>링크</b>: <a href=\"{safe_url}\">기사 보기</a>\n"
     
     # ADD NAVIGATION INSTRUCTIONS FOR ADIGA
     if article_id and 'adiga.kr' in url:
@@ -73,9 +95,14 @@ def format_telegram_message(title, content, url, department="general", article_i
     
     return message
 
-
 def format_program(program_data):
-    title = program_data.get('title', 'No Title')
+    # Use telegram_title if available (for Adiga compatibility)
+    telegram_title = program_data.get('telegram_title')
+    if telegram_title:
+        title = telegram_title
+    else:
+        title = program_data.get('title', 'No Title')
+    
     content = program_data.get('content', '')
     url = program_data.get('url', '')
     

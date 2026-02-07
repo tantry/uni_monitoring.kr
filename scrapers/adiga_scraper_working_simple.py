@@ -9,7 +9,7 @@ import re
 class AdigaScraper:
     def __init__(self):
         self.source_name = "Adiga (어디가)"
-        self.base_url = "https://adiga.kr"
+        self.base_url = "https://www.adiga.kr"
     
     def fetch_articles(self):
         """Simple fetch method that multi_monitor.py expects"""
@@ -49,7 +49,7 @@ class AdigaScraper:
                     content = content_elem.get_text(strip=True) if content_elem else ""
                     
                     # ✅✅✅ FIXED URL - THIS IS THE KEY FIX ✅✅✅
-                    article_url = f"https://adiga.kr/ArticleDetail.do?articleID={article_id}"
+                    article_url = f"https://www.adiga.kr/ArticleDetail.do?articleID={article_id}"
                     
                     articles.append({
                         'title': title,
@@ -69,7 +69,7 @@ class AdigaScraper:
             articles = [{
                 'title': '테스트: 서울대학교 음악학과 추가모집',
                 'content': '음악학과 추가모집 공고입니다.',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=99999',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=99999',
                 'source': self.source_name
             }]
         

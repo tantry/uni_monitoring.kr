@@ -1,10 +1,10 @@
 sources:
   adiga:
-    name: "Adiga (어디가)"
+    name: "Adiga University Portal"
+    url: "https://www.adiga.kr"
     enabled: true
-    base_url: "https://adiga.kr"
-    scraper_class: "adiga_scraper"  # Changed to match filename without .py
-    schedule: "*/30 * * * *"
-    priority: 1
-    timeout: 30
-    retry_attempts: 3
+    desktop_path: "/man/inf/mainView.do?menuId=PCMANINF1000"
+    mobile_url: "https://m.adiga.kr"
+    selectors:
+      article_links: ['a[onclick*=\"fnDetailPopup\"]']
+      content: ['.content', '.article-content', '.board-view']

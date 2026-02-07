@@ -21,7 +21,7 @@ class AdigaCorrectedScraper(BaseScraper):
     def __init__(self, config: Dict[str, Any] = None):
         config = config or {
             'name': 'adiga',
-            'base_url': 'https://adiga.kr',
+            'base_url': 'https://www.adiga.kr',
             'html_file_path': 'adiga_structure.html',
             'max_articles': 10,
             'display_name': 'Adiga (어디가)',
@@ -31,7 +31,7 @@ class AdigaCorrectedScraper(BaseScraper):
         
         base_config = {
             'name': config.get('name', 'adiga'),
-            'base_url': config.get('base_url', 'https://adiga.kr'),  # FIXED: Added closing quote
+            'base_url': config.get('base_url', 'https://www.adiga.kr'),  # FIXED: Added closing quote
             'timeout': config.get('timeout', 30),
             'retry_attempts': config.get('retry_attempts', 3)
         }
@@ -262,7 +262,7 @@ class LegacyAdigaScraper:
     def __init__(self):
         config = {
             'name': 'adiga',
-            'base_url': 'https://adiga.kr',
+            'base_url': 'https://www.adiga.kr',
             'html_file_path': 'adiga_structure.html',
             'max_articles': 10,
             'display_name': 'Adiga (어디가)',

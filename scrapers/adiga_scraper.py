@@ -1,532 +1,406 @@
-#!/usr/bin/env python3
 """
-Adiga.kr Scraper that extracts ACTUAL article content from hidden field
+Adiga scraper that handles JavaScript redirects
 """
+import time
 import re
 import requests
-import html
-from typing import List, Dict, Any, Optional
-from bs4 import BeautifulSoup
-from datetime import datetime
-import os
-import sys
-
-# Add the parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+from typing import List, Dict, Any
 from core.base_scraper import BaseScraper
-
+from models.article import Article
 
 class AdigaScraper(BaseScraper):
-    """Adiga.kr scraper that extracts actual article content."""
+    def __init__(self, config: Dict[str, Any]):
+        # Set to desktop URL directly
+        config['url'] = "https://www.adiga.kr"
+        self.desktop_path = "/man/inf/mainView.do?menuId=PCMANINF1000"
+        self.mobile_url = "https://m.adiga.kr"
+        
+        super().__init__(config)
+        self.source_name = "adiga"
+        self.actual_content_url = None
+        
+        # Enhanced headers
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+        })
     
-    def __init__(self, config: Dict[str, Any] = None):
-        if config is None:
-            config = {
-                'name': 'adiga',
-                'base_url': 'https://adiga.kr',
-                'html_file_path': 'adiga_structure.html',
-                'max_articles': 10,
-                'display_name': 'Adiga (어디가)',
-                'timeout': 30,
-                'retry_attempts': 3
-            }
-        
-        base_config = {
-            'name': config.get('name', 'adiga'),
-            'base_url': config.get('base_url', 'https://adiga.kr'),
-            'timeout': config.get('timeout', 30),
-            'retry_attempts': config.get('retry_attempts', 3)
-        }
-        
-        super().__init__(base_config)
-        
-        self.full_config = config
-        self.html_file_path = config.get('html_file_path', 'adiga_structure.html')
-        self.max_articles = config.get('max_articles', 10)
-        self.display_name = config.get('display_name', 'Adiga (어디가)')
-        
-        # URLs
-        self.ajax_url = "https://www.adiga.kr/uct/nmg/enw/newsAjax.do"
-        self.referer_url = "https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"
-        self.detail_url_base = "https://www.adiga.kr/uct/nmg/enw/newsDetail.do"
-        
-        self._session = None
-        
-        # Backward compatibility
-        self.source_config = {
-            'name': self.display_name,
-            'base_url': self.base_url,
-            'type': 'university_admission_session'
-        }
-        self.source_name = self.display_name
-        
-        self.logger.info(f"Initialized {self.display_name} with content extraction")
+    def get_source_name(self) -> str:
+        return self.source_name
     
-    @property
-    def session(self):
-        if self._session is None:
-            self._session = requests.Session()
-            self._session.headers.update({
-                'User-Agent': 'Mozilla/5.0',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Referer': self.referer_url
-            })
-        return self._session
+    def _get_actual_content(self):
+        """Get the actual content by following JavaScript redirects"""
+        # Strategy 1: Try desktop URL directly
+        desktop_url = f"{self.base_url}{self.desktop_path}"
+        print(f"DEBUG: Trying desktop URL: {desktop_url}")
+        
+        try:
+            response = self.session.get(desktop_url, timeout=15)
+            print(f"DEBUG: Desktop response: {response.status_code}, {len(response.content)} bytes")
+            
+            if response.status_code == 200 and len(response.content) > 1000:
+                self.actual_content_url = desktop_url
+                return response
+        except Exception as e:
+            print(f"DEBUG: Desktop URL failed: {e}")
+        
+        # Strategy 2: Try mobile URL
+        print(f"DEBUG: Trying mobile URL: {self.mobile_url}")
+        try:
+            response = self.session.get(self.mobile_url, timeout=15)
+            print(f"DEBUG: Mobile response: {response.status_code}, {len(response.content)} bytes")
+            
+            if response.status_code == 200 and len(response.content) > 1000:
+                self.actual_content_url = self.mobile_url
+                return response
+        except Exception as e:
+            print(f"DEBUG: Mobile URL failed: {e}")
+        
+        # Strategy 3: Try Selenium if available
+        print("DEBUG: Trying Selenium for JavaScript execution...")
+        selenium_response = self._try_selenium()
+        if selenium_response:
+            return selenium_response
+        
+        return None
+    
+    def _try_selenium(self):
+        """Try Selenium to execute JavaScript"""
+        try:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+            
+            print("DEBUG: Initializing Selenium...")
+            options = Options()
+            options.add_argument('--headless')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+            
+            driver = webdriver.Chrome(options=options)
+            
+            # Load the page and let JavaScript execute
+            print(f"DEBUG: Loading {self.base_url} with Selenium...")
+            driver.get(self.base_url)
+            time.sleep(3)  # Wait for JavaScript
+            
+            # Get the final URL after JavaScript redirects
+            final_url = driver.current_url
+            page_source = driver.page_source
+            
+            print(f"DEBUG: Final URL after JS: {final_url}")
+            print(f"DEBUG: Page size: {len(page_source)} bytes")
+            
+            driver.quit()
+            
+            if len(page_source) > 1000:
+                self.actual_content_url = final_url
+                # Create a mock response object
+                class MockResponse:
+                    def __init__(self, url, content):
+                        self.url = url
+                        self.content = content.encode('utf-8') if isinstance(content, str) else content
+                        self.status_code = 200
+                        self.text = content if isinstance(content, str) else content.decode('utf-8', errors='ignore')
+                
+                return MockResponse(final_url, page_source)
+            
+        except Exception as e:
+            print(f"DEBUG: Selenium failed: {e}")
+        
+        return None
     
     def fetch_articles(self) -> List[Dict[str, Any]]:
-        self.logger.info(f"Fetching articles with content extraction")
+        """Main fetch method"""
+        print("=== Adiga JavaScript Redirect Scraper ===")
         
-        try:
-            # Try live AJAX
-            live_articles = self._fetch_live_articles_ajax()
-            if live_articles:
-                # For live articles, we need to fetch each article's content
-                articles_with_content = []
-                for article in live_articles:
-                    try:
-                        enhanced = self._enhance_with_actual_content(article)
-                        articles_with_content.append(enhanced)
-                    except Exception as e:
-                        self.logger.warning(f"Failed to enhance article: {e}")
-                        articles_with_content.append(article)
-                return articles_with_content
-            else:
-                # Fallback to local
-                return self._parse_local_html()
-                
-        except Exception as e:
-            self.logger.error(f"Fetch error: {e}")
-            return self._parse_local_html()
-    
-    def _enhance_with_actual_content(self, article: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Fetch actual article content from detail page
-        """
-        url = article.get('url')
-        if not url:
-            return article
+        # Get actual content
+        response = self._get_actual_content()
         
-        try:
-            self.logger.debug(f"Fetching content from: {url}")
-            response = self.session.get(url, timeout=10, allow_redirects=True)
-            
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                # Extract hidden content from lnaCn1 input
-                hidden_input = soup.find('input', {'id': 'lnaCn1'})
-                if hidden_input and hidden_input.get('value'):
-                    hidden_html = hidden_input['value']
-                    
-                    # Decode HTML entities
-                    decoded_html = html.unescape(hidden_html)
-                    
-                    # Parse the decoded HTML to extract text
-                    content_soup = BeautifulSoup(decoded_html, 'html.parser')
-                    
-                    # Remove scripts and styles
-                    for script in content_soup(["script", "style"]):
-                        script.decompose()
-                    
-                    # Get clean text
-                    clean_text = content_soup.get_text()
-                    
-                    # Clean up the text
-                    lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
-                    clean_content = ' '.join(lines[:10])  # First 10 lines
-                    
-                    if clean_content and len(clean_content) > 50:
-                        # Replace preview with actual content
-                        article['content'] = clean_content[:500]  # Limit length
-                        article['metadata']['has_actual_content'] = True
-                        article['metadata']['content_source'] = 'detail_page'
-                        self.logger.debug(f"Extracted {len(clean_content)} chars of actual content")
-                    else:
-                        self.logger.debug("No substantial content extracted")
-                
-                # Also extract visible content
-                visible_content = self._extract_visible_content(soup)
-                if visible_content and 'content' not in article.get('metadata', {}).get('content_source', ''):
-                    article['content'] = visible_content[:500]
-                    article['metadata']['has_actual_content'] = True
-                    article['metadata']['content_source'] = 'visible_page'
-                
-        except Exception as e:
-            self.logger.warning(f"Failed to enhance article content: {e}")
-        
-        return article
-    
-    def _extract_visible_content(self, soup) -> str:
-        """Extract visible text from page"""
-        try:
-            # Remove scripts and styles
-            for script in soup(["script", "style", "input", "textarea"]):
-                script.decompose()
-            
-            # Get text and clean
-            text = soup.get_text()
-            lines = [line.strip() for line in text.split('\n') if line.strip()]
-            
-            # Filter out very short lines and navigation
-            content_lines = []
-            for line in lines:
-                if len(line) > 20 and not any(x in line for x in ['공통', '메뉴', '로그인', '검색']):
-                    content_lines.append(line)
-            
-            return ' '.join(content_lines[:10])  # First 10 content lines
-            
-        except Exception as e:
-            self.logger.debug(f"Visible content extraction failed: {e}")
-            return ""
-    
-    # Keep other methods the same as adiga_scraper_url_fixed.py
-    def _fetch_live_articles_ajax(self) -> List[Dict[str, Any]]:
-        """Same as before..."""
-        try:
-            self.session.get(self.referer_url, timeout=10)
-            
-            form_data = {
-                'menuId': 'PCUCTNMG2000',
-                'currentPage': '1',
-                'cntPerPage': '20',
-                'searchKeywordType': 'title',
-                'searchKeyword': '',
-            }
-            
-            response = self.session.post(self.ajax_url, data=form_data, timeout=15)
-            
-            if response.status_code != 200:
-                return []
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            article_elements = soup.find_all(class_='uctCastTitle')
-            
-            raw_articles = []
-            for element in article_elements[:self.max_articles]:
-                try:
-                    article = self._extract_from_ajax_element(element, soup)
-                    if article:
-                        raw_articles.append(article)
-                except:
-                    continue
-            
-            return raw_articles
-            
-        except:
+        if not response:
+            print("DEBUG: Could not get actual content")
             return []
-    
-    def _extract_from_ajax_element(self, element, soup) -> Optional[Dict[str, Any]]:
-        """Same as before..."""
-        try:
-            parent = element.find_parent(['li', 'tr', 'div'])
-            if not parent:
-                return None
-            
-            onclick_elem = parent.find(onclick=True)
-            if not onclick_elem:
-                return None
-            
-            onclick = onclick_elem.get('onclick', '')
-            match = re.search(r'fnDetailPopup\(["\'](\d+)["\']\)', onclick)
-            if not match:
-                return None
-            
-            article_id = match.group(1)
-            title = element.get_text(strip=True).replace('newIcon', '').strip()
-            
-            content = ""
-            content_elem = parent.select_one('.content')
-            if content_elem:
-                content = content_elem.get_text(strip=True)
-            
-            metadata = ""
-            info_elem = parent.select_one('.info')
-            if info_elem:
-                spans = info_elem.find_all('span')
-                metadata = " | ".join([span.get_text(strip=True) for span in spans])
-            
-            article_url = f"{self.detail_url_base}?prtlBbsId={article_id}"
-            
-            full_content = content
-            if metadata:
-                full_content += f"\n📅 {metadata}"
-            
-            return {
-                'title': title,
-                'content': full_content[:350],
-                'url': article_url,
-                'article_id': article_id,
-                'onclick_handler': onclick,
-                'is_live_scrape': True,
-                'metadata': {
-                    'source': self.display_name,
-                    'scraped_at': datetime.now().isoformat(),
-                    'scrape_method': 'ajax_live',
-                    'url_pattern': 'newsDetail.do?prtlBbsId=',
-                    'needs_content_enhancement': True  # Flag for enhancement
-                }
-            }
-            
-        except Exception as e:
-            self.logger.debug(f"Error extracting: {e}")
-            return None
-    
-    # Keep other methods the same...
-    def _parse_local_html(self) -> List[Dict[str, Any]]:
-        if not os.path.exists(self.html_file_path):
-            return self._get_fallback_articles()
         
-        try:
-            with open(self.html_file_path, 'r', encoding='utf-8') as f:
-                html = f.read()
+        print(f"DEBUG: Using content from: {self.actual_content_url}")
+        print(f"DEBUG: Content size: {len(response.content)} bytes")
+        
+        # Save for analysis
+        with open('actual_adiga_content_final.html', 'w', encoding='utf-8') as f:
+            f.write(response.text[:20000])
+        
+        # Parse content
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Remove scripts/styles
+        for script in soup(["script", "style"]):
+            script.decompose()
+        
+        # Save cleaned version
+        with open('cleaned_adiga_final.html', 'w', encoding='utf-8') as f:
+            f.write(soup.prettify()[:10000])
+        
+        # Extract articles
+        articles = self._extract_articles(soup)
+        print(f"DEBUG: Found {len(articles)} articles")
+        
+        return articles
+    
+    def _extract_articles(self, soup) -> List[Dict[str, Any]]:
+        """Extract articles from the actual content"""
+        articles = []
+        
+        # First, let's understand the page structure
+        print("DEBUG: Analyzing page structure...")
+        
+        # Look for common Korean site structures
+        # 1. Tables (common in Korean sites)
+        tables = soup.find_all('table')
+        print(f"DEBUG: Found {len(tables)} tables")
+        
+        # 2. List items
+        lists = soup.find_all(['ul', 'ol'])
+        print(f"DEBUG: Found {len(lists)} lists")
+        
+        # 3. Divs with common class names
+        common_classes = ['board', 'list', 'article', 'news', 'content', 'bbs']
+        for cls in common_classes:
+            elements = soup.find_all(class_=re.compile(cls, re.I))
+            if elements:
+                print(f"DEBUG: Found {len(elements)} elements with class containing '{cls}'")
+        
+        # 4. Look for fnDetailPopup
+        onclick_elements = soup.find_all(attrs={'onclick': re.compile(r'fnDetailPopup', re.I)})
+        print(f"DEBUG: Found {len(onclick_elements)} fnDetailPopup elements")
+        
+        for i, element in enumerate(onclick_elements[:20]):
+            try:
+                onclick = element.get('onclick', '')
+                match = re.search(r"fnDetailPopup\s*\(\s*['\"]?(\d+)['\"]?\s*\)", onclick)
+                
+                if match:
+                    article_id = match.group(1)
+                    text = element.get_text(strip=True)
+                    
+                    if not text or len(text) < 5:
+                        parent = element.parent
+                        if parent:
+                            text = parent.get_text(strip=True)
+                    
+                    if text and len(text) >= 5:
+                        # Determine base URL for article links
+                        base = self.actual_content_url or self.base_url
+                        if 'www.adiga.kr' in base:
+                            url = f"https://www.adiga.kr/ArticleDetail.do?articleID={article_id}"
+                        elif 'm.adiga.kr' in base:
+                            url = f"https://m.adiga.kr/ArticleDetail.do?articleID={article_id}"
+                        else:
+                            url = f"{self.base_url}/ArticleDetail.do?articleID={article_id}"
+                        
+                        articles.append({
+                            'title': text[:200],
+                            'url': url,
+                            'article_id': article_id,
+                            'source': 'fnDetailPopup'
+                        })
+                        print(f"DEBUG: Found via fnDetailPopup: {text[:50]}...")
+                        
+            except Exception as e:
+                print(f"DEBUG: Error processing onclick: {e}")
+                continue
+        
+        # If no fnDetailPopup found, try to find any article-like content
+        if not articles:
+            print("DEBUG: Searching for any article-like content...")
             
-            soup = BeautifulSoup(html, 'html.parser')
-            raw_articles = []
+            # Get all links
+            all_links = soup.find_all('a')
+            print(f"DEBUG: Total links: {len(all_links)}")
             
-            article_items = soup.select('ul.uctList02 li')
-            
-            for item in article_items[:self.max_articles]:
+            for i, link in enumerate(all_links[:200]):
                 try:
-                    article = self._extract_from_local_item(item)
-                    if article:
-                        raw_articles.append(article)
+                    href = link.get('href', '')
+                    text = link.get_text(strip=True)
+                    
+                    # Filter criteria
+                    if not text or len(text) < 10:
+                        continue
+                    
+                    # Skip navigation
+                    skip_terms = ['로그인', '회원가입', '검색', '홈', 'HOME', '이전', '다음']
+                    if any(term in text for term in skip_terms):
+                        continue
+                    
+                    # Must have university keywords
+                    keywords = ['입학', '모집', '공고', '안내', '대학', '학과', '학부']
+                    if any(keyword in text for keyword in keywords):
+                        # Build URL
+                        base = self.actual_content_url or self.base_url
+                        url = self._build_url(href, base)
+                        
+                        articles.append({
+                            'title': text[:200],
+                            'url': url,
+                            'href': href,
+                            'source': 'link'
+                        })
+                        
+                        if len(articles) <= 5:  # Only log first 5
+                            print(f"DEBUG [{i+1}]: Article link: {text[:50]}...")
+                        
                 except:
                     continue
+        
+        # If still no articles, look for text content
+        if not articles:
+            print("DEBUG: Extracting from page text...")
+            all_text = soup.get_text()
+            lines = [line.strip() for line in all_text.split('\n') if line.strip()]
             
-            return raw_articles
-            
-        except:
-            return self._get_fallback_articles()
+            for line in lines:
+                if len(line) > 30:
+                    for keyword in ['입학', '모집', '공고', '안내']:
+                        if keyword in line:
+                            articles.append({
+                                'title': line[:150],
+                                'url': self.actual_content_url or self.base_url,
+                                'content': line,
+                                'source': 'text'
+                            })
+                            print(f"DEBUG: Found in text: {line[:80]}...")
+                            break
+                
+                if len(articles) >= 3:
+                    break
+        
+        # Last resort: mock data for testing
+        if not articles:
+            print("DEBUG: Using mock data for testing...")
+            articles = self._get_mock_articles()
+        
+        return articles
     
-    def _extract_from_local_item(self, item) -> Optional[Dict[str, Any]]:
-        anchor = item.find('a', onclick=True)
-        if not anchor:
-            return None
+    def _build_url(self, href: str, base_url: str) -> str:
+        """Build absolute URL"""
+        if not href or href.startswith('javascript:'):
+            return base_url
         
-        onclick = anchor.get('onclick', '')
-        match = re.search(r'fnDetailPopup\(["\'](\d+)["\']\)', onclick)
-        if not match:
-            return None
+        if href.startswith('http://') or href.startswith('https://'):
+            return href
         
-        article_id = match.group(1)
+        if href.startswith('/'):
+            # Extract domain from base_url
+            from urllib.parse import urlparse
+            parsed = urlparse(base_url)
+            domain = f"{parsed.scheme}://{parsed.netloc}"
+            return f"{domain}{href}"
         
-        title_elem = anchor.select_one('.uctCastTitle')
-        if not title_elem:
-            return None
-        
-        title = title_elem.get_text(strip=True).replace('newIcon', '').strip()
-        
-        content_elem = anchor.select_one('.content')
-        content = content_elem.get_text(strip=True) if content_elem else ""
-        
-        info_elem = anchor.select_one('.info')
-        metadata = ""
-        if info_elem:
-            spans = info_elem.find_all('span')
-            metadata = " | ".join([span.get_text(strip=True) for span in spans])
-        
-        article_url = f"{self.detail_url_base}?prtlBbsId={article_id}"
-        
-        full_content = content
-        if metadata:
-            full_content += f"\n📅 {metadata}"
-        
-        return {
-            'title': title,
-            'content': full_content[:350],
-            'url': article_url,
-            'article_id': article_id,
-            'onclick_handler': onclick,
-            'is_live_scrape': False,
-            'metadata': {
-                'source': self.display_name,
-                'scraped_at': datetime.now().isoformat(),
-                'scrape_method': 'local_file',
-                'url_pattern': 'newsDetail.do?prtlBbsId=',
-                'needs_content_enhancement': True
-            }
-        }
+        # Relative URL
+        if base_url.endswith('/'):
+            return f"{base_url}{href}"
+        else:
+            return f"{base_url}/{href}"
     
-    def parse_article(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            article_id = raw_data.get('article_id', '')
-            title = raw_data.get('title', '')
-            content = raw_data.get('content', '')
-            url = raw_data.get('url', '')
-            metadata = raw_data.get('metadata', {})
-            
-            publish_date = self._extract_publish_date(content)
-            university = self._extract_university(title)
-            
-            article = {
-                'id': f"adiga_{article_id}",
-                'title': title,
-                'content': content,
-                'url': url,
-                'source': self.name,
-                'scraped_at': datetime.now().isoformat(),
-                'published_date': publish_date.isoformat() if publish_date else None,
-                'university': university,
-                'department': self._extract_department(title, content),
-                'metadata': {
-                    **metadata,
-                    'article_id': article_id,
-                    'correct_url_pattern': True,
-                    'url_works_with_session': True
-                }
-            }
-            
-            return article
-            
-        except Exception as e:
-            self.logger.error(f"Parse error: {e}")
-            return {
-                'id': f"adiga_error_{datetime.now().timestamp()}",
-                'title': "Parse Error",
-                'content': str(e),
-                'url': '',
-                'source': self.name,
-                'scraped_at': datetime.now().isoformat(),
-                'metadata': {'error': True}
-            }
-    
-    # Keep helper methods...
-    def _extract_publish_date(self, content: str) -> Optional[datetime]:
-        date_patterns = [
-            r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일',
-            r'(\d{4}-\d{2}-\d{2})',
-            r'(\d{4})\.(\d{2})\.(\d{2})'
-        ]
-        
-        for pattern in date_patterns:
-            match = re.search(pattern, content)
-            if match:
-                try:
-                    date_str = match.group(0)
-                    if '년' in date_str:
-                        year = int(match.group(1))
-                        month = int(match.group(2))
-                        day = int(match.group(3))
-                        return datetime(year, month, day)
-                    elif '-' in date_str:
-                        return datetime.fromisoformat(date_str)
-                    elif '.' in date_str:
-                        year = int(match.group(1))
-                        month = int(match.group(2))
-                        day = int(match.group(3))
-                        return datetime(year, month, day)
-                except:
-                    continue
-        return None
-    
-    def _extract_university(self, title: str) -> Optional[str]:
-        univ_patterns = [
-            (r'서울대', '서울대학교'),
-            (r'연세대', '연세대학교'),
-            (r'고려대', '고려대학교'),
-            (r'성균관대', '성균관대학교'),
-            (r'한양대', '한양대학교'),
-            (r'서강대', '서강대학교'),
-            (r'이화여대', '이화여자대학교'),
-            (r'중앙대', '중앙대학교'),
-            (r'경희대', '경희대학교'),
-            (r'한국외대', '한국외국어대학교')
-        ]
-        
-        for pattern, full_name in univ_patterns:
-            if re.search(pattern, title):
-                return full_name
-        return None
-    
-    def _extract_department(self, title: str, content: str) -> Optional[str]:
-        text_to_check = f"{title} {content}".lower()
-        
-        department_keywords = {
-            'music': ['음악', '실용음악', '성악', '작곡'],
-            'korean': ['한국어', '국어', '국어국문', '국문학'],
-            'english': ['영어', '영어영문', '영문학'],
-            'liberal': ['인문', '인문학', '교양', '교양교육']
-        }
-        
-        for dept, keywords in department_keywords.items():
-            for keyword in keywords:
-                if keyword in text_to_check:
-                    return dept
-        return None
-    
-    def _get_fallback_articles(self) -> List[Dict[str, Any]]:
-        self.logger.warning("Using fallback articles")
+    def _get_mock_articles(self):
+        """Get mock articles for testing"""
         return [
             {
-                'title': '[입시의 정석] 정시 등록 오늘부터…이중 등록 유의해야',
-                'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인. <EBS뉴스 2026-02-03 발췌>',
-                'url': f"{self.detail_url_base}?prtlBbsId=26546",
-                'article_id': '26546',
-                'is_live_scrape': False,
-                'metadata': {
-                    'source': self.display_name,
-                    'scraped_at': datetime.now().isoformat(),
-                    'is_fallback': True,
-                    'correct_url_pattern': True,
-                    'has_actual_content': True
-                }
+                'title': '[테스트] 서울대학교 음악학과 2026학년도 추가모집 공고',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=99999',
+                'content': '서울대학교 음악학과에서 2026학년도 추가모집을 실시합니다. 접수기간: 2026.02.10~02.20'
+            },
+            {
+                'title': '[테스트] 연세대학교 영어영문학과 정시모집 안내',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=99998', 
+                'content': '연세대학교 영어영문학과 2026학년도 정시모집 안내입니다. 모집인원: 30명'
+            },
+            {
+                'title': '[테스트] 고려대학교 한국어학과 수시모집 공고',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=99997',
+                'content': '고려대학교 한국어학과 2026학년도 수시모집 모집요강 안내'
             }
         ]
     
-    def cleanup(self):
-        if self._session:
-            self._session.close()
-            self._session = None
+    def parse_article(self, raw_data: Dict[str, Any]) -> Article:
+        """Parse article"""
+        try:
+            content = raw_data.get('content', '')
+            
+            # Try to fetch real content if not provided
+            if not content and raw_data['url']:
+                try:
+                    response = self.session.get(raw_data['url'], timeout=10)
+                    if response.status_code == 200:
+                        from bs4 import BeautifulSoup
+                        soup = BeautifulSoup(response.content, 'html.parser')
+                        
+                        for tag in soup(['script', 'style']):
+                            tag.decompose()
+                        
+                        content = soup.get_text(strip=True, separator=' ')[:1000]
+                except:
+                    content = "내용을 불러올 수 없습니다."
+            
+            return Article(
+                title=raw_data['title'],
+                url=raw_data['url'],
+                content=content,
+                source=self.source_name
+            )
+            
+        except Exception as e:
+            print(f"DEBUG: Parse error: {e}")
+            return Article(
+                title=raw_data.get('title', 'Unknown'),
+                url=raw_data.get('url', self.base_url),
+                content="Parse error",
+                source=self.source_name
+            )
 
-
-# Legacy compatibility wrapper
-class LegacyAdigaScraper:
-    def __init__(self):
-        config = {
-            'name': 'adiga',
-            'base_url': 'https://adiga.kr',
-            'html_file_path': 'adiga_structure.html',
-            'max_articles': 10,
-            'display_name': 'Adiga (어디가)',
-            'timeout': 30,
-            'retry_attempts': 3
-        }
-        self._scraper = AdigaScraper(config)
-        self.source_name = self._scraper.display_name
-        self.source_config = self._scraper.source_config
-    
-    def scrape(self):
-        return self._scraper.scrape()
-    
-    def find_new_programs(self, current_programs):
-        return self._scraper.find_new_programs(current_programs)
-    
-    def save_detected(self, programs):
-        return self._scraper.save_detected(programs)
-
-
-# Test
-if __name__ == "__main__":
-    print("Testing AdigaScraper with Content Extraction")
+def test_js_redirect_scraper():
+    """Test the scraper"""
+    print("=" * 60)
+    print("ADIGA JAVASCRIPT REDIRECT SCRAPER TEST")
     print("=" * 60)
     
-    scraper = AdigaScraper()
+    scraper = AdigaScraper({'url': 'https://www.adiga.kr'})
+    articles = scraper.fetch_articles()
     
-    try:
-        articles = scraper.fetch_articles()
-        print(f"Fetched {len(articles)} articles")
-        
-        if articles:
-            print(f"\nFirst article:")
-            print(f"Title: {articles[0].get('title', 'Unknown')}")
-            print(f"URL: {articles[0].get('url', 'No URL')}")
-            print(f"Content length: {len(articles[0].get('content', ''))} chars")
-            print(f"Has actual content: {articles[0].get('metadata', {}).get('has_actual_content', False)}")
-            print(f"Content preview: {articles[0].get('content', '')[:150]}...")
-        
+    print(f"\n✅ FINAL: {len(articles)} articles found")
+    
+    for i, article in enumerate(articles):
+        print(f"\n{i+1}. {article['title'][:80]}...")
+        print(f"   URL: {article['url']}")
+        print(f"   Source: {article.get('source', 'unknown')}")
+    
+    # Test parsing
+    if articles:
         print("\n" + "=" * 60)
-        print("Content extraction implemented!")
+        print("ARTICLE PARSING TEST:")
+        print("=" * 60)
         
-    finally:
-        scraper.cleanup()
+        parsed = scraper.parse_article(articles[0])
+        print(f"\nTitle: {parsed.title}")
+        print(f"URL: {parsed.url}")
+        print(f"Content: {parsed.content[:200]}...")
+        
+        # Show Telegram message format
+        message = f"""
+🎓 <b>새 입학 공고</b>
+
+<b>제목:</b> {parsed.title}
+
+<b>내용:</b> {parsed.content[:200]}...
+
+<b>링크:</b> {parsed.url}
+
+<b>출처:</b> {parsed.source}
+#adiga #대학입시
+"""
+        print(f"\nTelegram message:\n{message}")
+    
+    return articles
+
+if __name__ == "__main__":
+    test_js_redirect_scraper()

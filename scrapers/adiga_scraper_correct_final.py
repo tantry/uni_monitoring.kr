@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 class AdigaScraper:
     def __init__(self):
         self.source_name = "Adiga (어디가)"
-        self.base_url = "https://adiga.kr"
+        self.base_url = "https://www.adiga.kr"
     
     def fetch_articles(self):
         """Parse YOUR exact HTML structure"""
@@ -109,14 +109,14 @@ class AdigaScraper:
             {
                 'title': '[입시의 정석] 정시 등록 오늘부터…이중 등록 유의해야',
                 'content': '정시 등록이 오늘부터 시작됩니다. 대학별 등록 마감일 확인.',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=26546',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=26546',
                 'article_id': '26546',
                 'source': self.source_name
             },
             {
                 'title': '[입시용어 따라잡기] 창체/세특/행특',
                 'content': '창체, 세특, 행특 용어 설명 및 입시 활용 방법.',
-                'url': 'https://adiga.kr/ArticleDetail.do?articleID=26545',
+                'url': 'https://www.adiga.kr/ArticleDetail.do?articleID=26545',
                 'article_id': '26545',
                 'source': self.source_name
             }
