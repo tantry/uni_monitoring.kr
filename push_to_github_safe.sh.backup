@@ -71,21 +71,8 @@ esac
 echo ""
 echo "3. ✅ STAGED CHANGES:"
 echo "-------------------"
-
-# Temporarily disable git pager to show output directly
-GIT_PAGER_IN_USE=$(git config --get core.pager 2>/dev/null || echo "")
-echo "   (Output shown directly, no need to press 'q')"
-git config --global core.pager ""
-
+echo "   (Press 'q' to continue if output is paused)"
 git diff --cached --name-status
-
-# Restore original pager if it existed
-if [ -n "$GIT_PAGER_IN_USE" ]; then
-    git config --global core.pager "$GIT_PAGER_IN_USE"
-else
-    git config --global --unset core.pager 2>/dev/null || true
-fi
-
 if [ $? -ne 0 ]; then
     echo "   No changes staged"
     echo "   ❌ Nothing to commit"
