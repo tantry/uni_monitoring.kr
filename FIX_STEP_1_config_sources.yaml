@@ -1,17 +1,24 @@
+# UPDATE: config/sources.yaml
+
+# REPLACE the adiga section with this:
+
 sources:
   adiga:
     name: "Adiga University Portal"
     url: "https://www.adiga.kr"
     enabled: true
     
-    # CRITICAL: New URL pointing to actual notice board (NOT homepage)
+    # CRITICAL: The correct URL structure for actual announcements
+    # NOT /man/inf/mainView.do (which is just a container)
+    # BUT /cct/pbf/noticeList.do (which is the actual notice board)
+    
     announcement_paths:
       - path: "/cct/pbf/noticeList.do"
         menu_id: "PCCCTPBF1000"
         name: "공지사항 (Main Notices)"
         enabled: true
       
-      - path: "/uct/nmg/enw/newsView.do"
+      - path: "/uct/nmg/enw/newsView.do"  
         menu_id: "PCUCTNMG2000"
         name: "대입주요자료 (Admission News)"
         enabled: true

@@ -74,7 +74,6 @@ echo "-------------------"
 
 # Temporarily disable git pager to show output directly
 GIT_PAGER_IN_USE=$(git config --get core.pager 2>/dev/null || echo "")
-echo "   (Output shown directly, no need to press 'q')"
 git config --global core.pager ""
 
 git diff --cached --name-status

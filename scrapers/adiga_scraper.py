@@ -1,283 +1,249 @@
 """
-Proper Adiga scraper based on actual site structure
+Adiga scraper with Selenium - clicks popup links to extract content
 """
 import time
 import re
-import requests
 from typing import List, Dict, Any
-from core.base_scraper import BaseScraper
-from models.article import Article
+from bs4 import BeautifulSoup
+
+# Try importing from core, fallback if not available
+try:
+    from core.base_scraper import BaseScraper
+    from models.article import Article
+except ImportError:
+    # Fallback for standalone testing
+    class BaseScraper:
+        def __init__(self, config):
+            self.config = config
+            self.base_url = config.get('url', 'https://www.adiga.kr')
+            import requests
+            self.session = requests.Session()
+    
+    class Article:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+            self.title = kwargs.get('title', '')
+            self.url = kwargs.get('url', '')
+            self.content = kwargs.get('content', '')
+            self.source = kwargs.get('source', '')
 
 class AdigaScraper(BaseScraper):
     def __init__(self, config: Dict[str, Any]):
-        config['url'] = "https://www.adiga.kr"
+        if 'url' not in config:
+            config['url'] = "https://www.adiga.kr"
         
         super().__init__(config)
         self.source_name = "adiga"
+        self.driver = None
         
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        })
-    
     def get_source_name(self) -> str:
         return self.source_name
     
-    def fetch_articles(self) -> List[Dict[str, Any]]:
-        """Fetch articles based on actual Adiga structure"""
-        print("=== Adiga Proper Scraper ===")
-        
-        # Get main page
-        main_url = f"{self.base_url}/man/inf/mainView.do?menuId=PCMANINF1000"
-        print(f"DEBUG: Fetching main page: {main_url}")
-        
+    def _init_selenium(self):
+        """Initialize Selenium WebDriver with Chrome Beta"""
         try:
-            response = self.session.get(main_url, timeout=15)
-            print(f"DEBUG: Status: {response.status_code}, Size: {len(response.content)} bytes")
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
             
-            if response.status_code != 200:
-                return []
+            print("DEBUG: Initializing Selenium with Chrome Beta 145...")
             
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(response.content, 'html.parser')
+            options = Options()
+            options.add_argument('--headless=new')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--window-size=1920,1080')
+            options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36')
             
-            # Save for debugging
-            with open('adiga_main_analysis.html', 'w', encoding='utf-8') as f:
-                f.write(response.text[:15000])
+            # Use Chrome Beta
+            options.binary_location = '/usr/bin/google-chrome-beta'
             
-            # Strategy: Look for actual article links in the page
-            articles = []
+            # Use ChromeDriver (beta version at /usr/bin/chromedriver)
+            service = Service('/usr/bin/chromedriver')
+            self.driver = webdriver.Chrome(service=service, options=options)
+            self.driver.set_page_load_timeout(30)
             
-            # Find ALL links first
-            all_links = soup.find_all('a')
-            print(f"DEBUG: Total links on page: {len(all_links)}")
-            
-            # Look for article patterns
-            article_patterns = [
-                # Pattern 1: Links with prtlBbsId (article IDs)
-                lambda href: 'prtlBbsId=' in href if href else False,
-                
-                # Pattern 2: Links to noticeDetail
-                lambda href: 'noticeDetail.do' in href if href else False,
-                
-                # Pattern 3: Links that look like articles (not menu navigation)
-                lambda href: href and 'menuId=' in href and 'Detail.do' in href,
-            ]
-            
-            for link in all_links:
-                try:
-                    href = link.get('href', '')
-                    text = link.get_text(strip=True)
-                    
-                    # Basic filtering
-                    if not text or len(text) < 10:
-                        continue
-                    
-                    # Skip navigation links
-                    skip_terms = ['로그인', '회원가입', '검색', '사이트맵', '이전', '다음', '홈']
-                    if any(term in text for term in skip_terms):
-                        continue
-                    
-                    # Check if it matches article patterns
-                    is_article_link = any(pattern(href) for pattern in article_patterns)
-                    
-                    # OR has admission keywords in text
-                    admission_keywords = ['입학', '모집', '공고', '전형', '원서접수']
-                    has_admission_keywords = any(keyword in text for keyword in admission_keywords)
-                    
-                    if is_article_link or has_admission_keywords:
-                        # Build URL
-                        url = self._build_url(href)
-                        
-                        # Get additional context
-                        parent_text = ""
-                        parent = link.parent
-                        if parent:
-                            parent_text = parent.get_text(strip=True, separator=' ')[:100]
-                        
-                        articles.append({
-                            'title': text[:200],
-                            'url': url,
-                            'href': href,
-                            'context': parent_text,
-                            'is_article_link': is_article_link,
-                            'has_admission_keywords': has_admission_keywords
-                        })
-                        
-                        print(f"DEBUG: Potential article: {text[:60]}...")
-                        print(f"       URL: {url[:80]}...")
-                        
-                except Exception as e:
-                    continue
-            
-            # Filter for actual admission articles
-            print(f"\nDEBUG: Found {len(articles)} potential articles, filtering...")
-            
-            filtered_articles = []
-            for article in articles:
-                title = article['title'].lower()
-                url = article['url']
-                
-                # Filter criteria
-                is_admission_related = any(keyword in title for keyword in [
-                    '입학', '모집', '공고', '전형', '원서접수', '모집요강',
-                    '정시', '수시', '추가모집', '정원'
-                ])
-                
-                is_department_related = any(keyword in title for keyword in [
-                    '음악', '영어', '한국어', '국어', '인문', '공학', '교육'
-                ])
-                
-                has_year_pattern = re.search(r'\d{4}학년도', title)
-                
-                # Keep if it's clearly admission-related OR department-related with year
-                if is_admission_related or (is_department_related and has_year_pattern):
-                    filtered_articles.append(article)
-                    print(f"DEBUG: ✓ Kept: {article['title'][:50]}...")
-                else:
-                    print(f"DEBUG: ✗ Filtered out: {article['title'][:50]}...")
-            
-            print(f"DEBUG: Final count: {len(filtered_articles)} admission articles")
-            
-            # If no articles found, use fallback strategy
-            if not filtered_articles:
-                print("DEBUG: No articles found, checking for any content...")
-                
-                # Look for any text that mentions admission
-                all_text = soup.get_text()
-                lines = [line.strip() for line in all_text.split('\n') if line.strip()]
-                
-                for line in lines:
-                    if len(line) > 30:
-                        for keyword in ['입학', '모집', '공고']:
-                            if keyword in line:
-                                filtered_articles.append({
-                                    'title': line[:150],
-                                    'url': main_url,
-                                    'content': line,
-                                    'is_fallback': True
-                                })
-                                print(f"DEBUG: Fallback found: {line[:80]}...")
-                                break
-                    
-                    if len(filtered_articles) >= 3:
-                        break
-            
-            return filtered_articles
+            print("DEBUG: Selenium initialized successfully")
+            return True
             
         except Exception as e:
-            print(f"DEBUG: Error: {e}")
+            print(f"DEBUG: Selenium initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def fetch_articles(self) -> List[Dict[str, Any]]:
+        """Fetch articles by clicking popup links with Selenium"""
+        print("=" * 80)
+        print("ADIGA SCRAPER - CLICKING POPUPS FOR CONTENT")
+        print("=" * 80)
+        
+        # Initialize Selenium
+        if not self._init_selenium():
+            print("ERROR: Could not initialize Selenium")
+            return []
+        
+        articles = []
+        
+        try:
+            from selenium.webdriver.common.by import By
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            
+            # Navigate to the news page
+            url = "https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000"
+            print(f"📋 Fetching: {url}")
+            
+            self.driver.get(url)
+            time.sleep(3)
+            
+            print(f"   Status: Page loaded")
+            
+            # Find all popup links
+            popup_links = self.driver.find_elements(By.XPATH, "//a[contains(@onclick, 'fnDetailPopup')]")
+            print(f"   ✓ Found {len(popup_links)} popup links")
+            
+            # Process each link (limit to first 10 for testing)
+            for idx, link in enumerate(popup_links[:10]):
+                try:
+                    # Get article info before clicking
+                    onclick = link.get_attribute('onclick')
+                    match = re.search(r'fnDetailPopup\s*\(\s*["\'](\d+)["\']\s*\)', onclick)
+                    if not match:
+                        continue
+                    
+                    article_id = match.group(1)
+                    
+                    # Get title
+                    try:
+                        title_elem = link.find_element(By.CLASS_NAME, 'uctCastTitle')
+                        title = title_elem.text.strip()
+                    except:
+                        title = link.text.strip()
+                    
+                    if not title or len(title) < 5:
+                        continue
+                    
+                    print(f"\n   [{idx+1}] Clicking: {title[:60]}... (ID: {article_id})")
+                    
+                    # Click the link to open popup
+                    self.driver.execute_script("arguments[0].click();", link)
+                    time.sleep(2)  # Wait for popup to load
+                    
+                    # Extract content from popup
+                    page_source = self.driver.page_source
+                    soup = BeautifulSoup(page_source, 'html.parser')
+                    
+                    # Look for popup content
+                    # Common popup selectors
+                    content = ""
+                    popup_selectors = [
+                        {'class': 'popCont'},
+                        {'class': 'modal-body'},
+                        {'class': 'popup-content'},
+                        {'id': 'newsDetail'},
+                        {'class': 'detail-content'},
+                    ]
+                    
+                    for selector in popup_selectors:
+                        popup_elem = soup.find('div', selector)
+                        if popup_elem:
+                            # Remove scripts and styles
+                            for tag in popup_elem(['script', 'style']):
+                                tag.decompose()
+                            content = popup_elem.get_text(strip=True, separator=' ')[:500]
+                            if content:
+                                break
+                    
+                    if not content:
+                        # Fallback: get any visible text that appeared after click
+                        content = title
+                    
+                    # Check for admission keywords
+                    admission_keywords = ['입학', '모집', '공고', '전형', '원서', '입시', '수시', '정시', '학과']
+                    title_lower = title.lower()
+                    content_lower = content.lower()
+                    combined = title_lower + ' ' + content_lower
+                    
+                    is_admission = any(kw in combined for kw in admission_keywords)
+                    
+                    if is_admission:
+                        articles.append({
+                            'title': title,
+                            'url': f"https://www.adiga.kr/uct/nmg/enw/newsView.do?menuId=PCUCTNMG2000#article_{article_id}",
+                            'article_id': article_id,
+                            'content': content
+                        })
+                        print(f"       ✓ Extracted {len(content)} chars of content")
+                    else:
+                        print(f"       ✗ Not admission-related")
+                    
+                    # Close popup if there's a close button
+                    try:
+                        close_button = self.driver.find_element(By.XPATH, "//button[contains(@class, 'close') or contains(text(), '닫기')]")
+                        close_button.click()
+                        time.sleep(0.5)
+                    except:
+                        # Popup might auto-close or no close button
+                        pass
+                    
+                except Exception as e:
+                    print(f"       Error processing link: {e}")
+                    continue
+            
+            print("\n" + "=" * 80)
+            print(f"RESULT: {len(articles)} admission-related articles extracted")
+            print("=" * 80)
+            
+            return articles
+            
+        except Exception as e:
+            print(f"ERROR: {e}")
             import traceback
             traceback.print_exc()
             return []
-    
-    def _build_url(self, href: str) -> str:
-        """Build absolute URL"""
-        if not href or href.startswith('javascript:'):
-            return f"{self.base_url}/man/inf/mainView.do?menuId=PCMANINF1000"
         
-        if href.startswith('http://') or href.startswith('https://'):
-            return href
-        
-        if href.startswith('/'):
-            return f"{self.base_url}{href}"
-        
-        return f"{self.base_url}/{href}"
+        finally:
+            if self.driver:
+                self.driver.quit()
+                print("DEBUG: Selenium driver closed")
     
     def parse_article(self, raw_data: Dict[str, Any]) -> Article:
-        """Parse article content"""
-        try:
-            content = raw_data.get('content', '')
-            
-            # If fallback text, use it as content
-            if content:
-                return Article(
-                    title=raw_data['title'],
-                    url=raw_data['url'],
-                    content=content,
-                    source=self.source_name
-                )
-            
-            # Try to fetch article content
-            if raw_data['url'] and not raw_data['url'].endswith('menuId=PCMANINF1000'):
-                try:
-                    print(f"DEBUG: Fetching article: {raw_data['url']}")
-                    response = self.session.get(raw_data['url'], timeout=10)
-                    
-                    if response.status_code == 200:
-                        from bs4 import BeautifulSoup
-                        soup = BeautifulSoup(response.content, 'html.parser')
-                        
-                        # Try to find article content
-                        content_selectors = [
-                            '.content', '.article-content', '.board-view',
-                            '.view-content', 'article', 'main', '.bd', 'td.content'
-                        ]
-                        
-                        for selector in content_selectors:
-                            element = soup.select_one(selector)
-                            if element:
-                                content = element.get_text(strip=True, separator=' ')[:1000]
-                                break
-                        
-                        if not content:
-                            # Fallback: get body text
-                            for tag in soup(['script', 'style']):
-                                tag.decompose()
-                            body = soup.find('body')
-                            if body:
-                                content = body.get_text(strip=True, separator=' ')[:800]
-                except Exception as e:
-                    print(f"DEBUG: Error fetching article: {e}")
-                    content = "내용을 불러올 수 없습니다."
-            
-            return Article(
-                title=raw_data['title'],
-                url=raw_data['url'],
-                content=content,
-                source=self.source_name
-            )
-            
-        except Exception as e:
-            print(f"DEBUG: Parse error: {e}")
-            return Article(
-                title=raw_data.get('title', 'Unknown'),
-                url=raw_data.get('url', f"{self.base_url}/man/inf/mainView.do?menuId=PCMANINF1000"),
-                content="Parse error",
-                source=self.source_name
-            )
+        """Parse raw article data into Article object"""
+        return Article(
+            title=raw_data.get('title', 'No Title'),
+            url=raw_data.get('url', ''),
+            content=raw_data.get('content', raw_data.get('title', '')),
+            source=self.source_name
+        )
 
-def test_proper_scraper():
-    """Test the proper scraper"""
-    print("=" * 60)
-    print("ADIGA PROPER SCRAPER TEST")
-    print("=" * 60)
+def test_scraper():
+    """Test the scraper"""
+    print("🧪 Testing AdigaScraper with Popup Clicking...\n")
     
-    scraper = AdigaProperScraper({'url': 'https://adiga.kr'})
+    scraper = AdigaScraper({'url': 'https://www.adiga.kr'})
     articles = scraper.fetch_articles()
     
-    print(f"\nResults: {len(articles)} articles found")
+    print(f"\n📊 Results: {len(articles)} articles found\n")
     
-    for i, article in enumerate(articles[:10]):
-        print(f"\n{i+1}. {article['title'][:80]}...")
+    for i, article in enumerate(articles, 1):
+        print(f"{i}. {article['title']}")
         print(f"   URL: {article['url']}")
-        if article.get('is_fallback'):
-            print(f"   Type: Fallback text")
+        print(f"   Content: {article['content'][:100]}...")
+        print()
     
-    # Test parsing if we have articles
     if articles:
-        print("\n" + "=" * 60)
-        print("ARTICLE PARSING TEST:")
-        print("=" * 60)
-        
+        print("\n" + "=" * 80)
+        print("SAMPLE PARSED ARTICLE:")
+        print("=" * 80)
         parsed = scraper.parse_article(articles[0])
-        print(f"\nTitle: {parsed.title}")
+        print(f"Title: {parsed.title}")
         print(f"URL: {parsed.url}")
         print(f"Content length: {len(parsed.content)} chars")
-        if parsed.content:
-            print(f"Preview: {parsed.content[:200]}...")
+        print(f"Content: {parsed.content[:300]}...")
     
     return articles
 
 if __name__ == "__main__":
-    test_proper_scraper()
+    test_scraper()

@@ -1,14 +1,13 @@
 #!/bin/bash
-# University Admission Monitor - Multi-Source Version
-
+# University Admission Monitor - Using New Architecture
 cd ~/uni_monitoring.kr
 
 echo "==============================================="
-echo "   UNIVERSITY ADMISSION MONITOR - MULTI-SOURCE"
+echo "   UNIVERSITY ADMISSION MONITOR"
 echo "   Started: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "==============================================="
 
-python3 multi_monitor.py
+python3 core/monitor_engine.py
 
 echo ""
 echo "==============================================="
