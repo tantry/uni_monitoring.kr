@@ -122,21 +122,25 @@ class MonitorEngine:
         return "general"
     
     def format_message(self, article: Article, department: str) -> str:
-        """Format article as Telegram message with HTML links"""
+        """Format article as Telegram message"""
+        # Truncate content if too long
         content = article.content
-        if len(content) > 250:
-            content = content[:247] + "..."
+        if len(content) > 300:
+            content = content[:297] + "..."
         
-        message = f"""🎓 <b>[새 입학 공고] {article.title}</b>
+        message = f"""
+🎓 <b>새 입학 공고</b>
 
-📌 <b>부서/학과</b>: {department}
-📝 <b>내용</b>: {content}
-🔗 <a href="{article.url}">기사 보기</a>
+<b>제목:</b> {article.title}
 
-<b>💡 URL 확인 - 열기:</b>
-뉴스 링크 찾고 - 길게 누르고 - '다음으로 열기'
+<b>부서:</b> {department}
+<b>내용:</b> {content}
 
-#대학입시 #{department}"""
+<b>링크:</b> {article.url}
+
+<b>출처:</b> {article.source}
+#{department} #{article.source}
+"""
         return message.strip()
     
     def test_scraping(self) -> List[Article]:
