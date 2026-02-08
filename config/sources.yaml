@@ -3,7 +3,16 @@ sources:
     name: "Adiga University Portal"
     url: "https://www.adiga.kr"
     enabled: true
-    
+# Add UNN News to the sources list
+unn_news:
+  name: "UNN News"
+  url: "https://news.unn.net/rss/allArticle.xml"
+  enabled: true
+  scrape_interval: 1800  # 30 minutes
+  description: "UNN News RSS feed for university announcements"
+  type: "rss"
+
+# Keep existing sources (like adiga)...    
     # CRITICAL: New URL pointing to actual notice board (NOT homepage)
     announcement_paths:
       - path: "/cct/pbf/noticeList.do"

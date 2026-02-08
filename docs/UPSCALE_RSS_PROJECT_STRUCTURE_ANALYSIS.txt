@@ -1,0 +1,375 @@
+===============================================================
+UNIVERSITY MONITORING SYSTEM - PROJECT STRUCTURE ANALYSIS
+===============================================================
+Analysis Date: $(date)
+Analysis Scope: Technical Deep Dive
+===============================================================
+
+1. MODULE IMPORT PATTERNS
+===============================================================
+
+1.1 CORE MODULE IMPORTS
+-----------------------
+Pattern: Relative imports within project, fallbacks for testing
+
+Example from scraper_template.py:
+```python
+try:
+    from core.base_scraper import BaseScraper
+    from models.article import Article
+except ImportError:
+    # Fallback for standalone testing
+    class BaseScraper: ...
+    class Article: ...
+```
+
+Key Insight: All production scrapers must import from:
+- core.base_scraper
+- models.article
+
+1.2 EXTERNAL DEPENDENCIES
+-------------------------
+REQUIRED:
+- feedparser>=6.0.8 (for RSS feeds)
+- requests>=2.31.0 (HTTP client)
+- beautifulsoup4>=4.12.0 (HTML parsing)
+- selenium>=4.15.0 (JavaScript sites)
+- pyyaml>=6.0.1 (configuration)
+
+OPTIONAL:
+- python-dateutil>=2.8.2 (date parsing)
+- pydantic>=2.5.0 (data validation)
+
+1.3 PYTHON PATH REQUIREMENTS
+----------------------------
+PROJECT ROOT MUST BE IN sys.path:
+- Default: When running from project root directory
+- Alternative: PYTHONPATH=. python3 script.py
+- Alternative: sys.path.insert(0, '/path/to/project')
+
+Common Error: ModuleNotFoundError when not in project root
+
+2. CONFIGURATION SYSTEM
+===============================================================
+
+2.1 YAML CONFIGURATION HIERARCHY
+---------------------------------
+Primary: config/config.yaml
+- telegram: bot_token, chat_id
+- database: path, timeout
+- logging: level, file
+
+Sources: config/sources.yaml
+- Dictionary of source configurations
+- Each source has: name, url, enabled, scrape_interval
+
+Filters: config/filters.yaml
+- departments dictionary
+- Each department: name, keywords[], emoji, priority
+
+2.2 CONFIGURATION LOADING PATTERN
+----------------------------------
+Location: core/monitor_engine.py
+```python
+import yaml
+
+with open('config/sources.yaml', 'r', encoding='utf-8') as f:
+    sources_config = yaml.safe_load(f)
+
+with open('config/filters.yaml', 'r', encoding='utf-8') as f:
+    filters_config = yaml.safe_load(f)
+```
+
+2.3 DYNAMIC CONFIGURATION USAGE
+--------------------------------
+Scraper receives config dict:
+```python
+class Scraper(BaseScraper):
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.base_url = config.get('url', '')
+        # Additional config parsing
+```
+
+3. DATA MODELS & SCHEMA
+===============================================================
+
+3.1 ARTICLE MODEL (models/article.py)
+--------------------------------------
+Expected Structure (Pydantic model):
+```python
+class Article(BaseModel):
+    title: str
+    url: str
+    content: str
+    source: str
+    published_date: str = Field(default_factory=get_current_date)
+    author: str = ""
+    categories: List[str] = []
+    metadata: Dict[str, Any] = {}
+```
+
+3.2 INTERMEDIATE DATA FORMAT
+-----------------------------
+Between fetch_articles() and parse_article():
+```python
+{
+    'title': 'Article Title',
+    'url': 'https://example.com/article',
+    'content': 'Full article content...',
+    'summary': 'Short summary...',  # Optional
+    'published_date': '2024-01-01 12:00:00',
+    'source': 'source_name',
+    'author': 'Author Name',  # Optional
+    'categories': ['cat1', 'cat2'],  # Optional
+    'metadata': {...}  # Optional additional data
+}
+```
+
+3.3 DATABASE SCHEMA (SQLite)
+-----------------------------
+File: data/state.db (auto-generated)
+
+Expected Tables:
+- articles: Stored articles for duplicate detection
+- notification_history: Sent notifications
+- scraper_state: Last run timestamps
+
+4. SCRAPER INTERFACE SPECIFICATION
+===============================================================
+
+4.1 ABSTRACT BASE CLASS REQUIREMENTS
+-------------------------------------
+File: core/base_scraper.py
+
+REQUIRED METHODS:
+1. fetch_articles() -> List[Dict[str, Any]]
+   - Must return list of article dictionaries
+   - Each dict must contain minimum: title, url, content
+   - Should handle all errors internally
+
+2. parse_article(raw_data: Dict[str, Any]) -> Article
+   - Converts raw dict to Article model
+   - Must fill all required Article fields
+   - Can add optional metadata
+
+3. get_source_name() -> str
+   - Returns string identifier
+   - Used in logging and notifications
+
+OPTIONAL METHODS:
+- _extract_content(): Content cleaning
+- _parse_date(): Date parsing utilities
+- detect_department(): Department detection
+
+4.2 ERROR HANDLING REQUIREMENTS
+--------------------------------
+Pattern: Log errors, return empty list on failure
+```python
+def fetch_articles(self) -> List[Dict]:
+    try:
+        # scraping logic
+        return articles
+    except Exception as e:
+        self.logger.error(f"Scraping failed: {e}")
+        return []  # Always return list, never raise
+```
+
+4.3 LOGGING REQUIREMENTS
+-------------------------
+Each scraper has self.logger:
+```python
+self.logger.info(f"Found {len(articles)} articles")
+self.logger.warning(f"No content for article: {title}")
+self.logger.error(f"Failed to parse date: {date_str}")
+```
+
+5. FILTER SYSTEM DETAILS
+===============================================================
+
+5.1 FILTER ENGINE ARCHITECTURE
+-------------------------------
+File: core/filter_engine.py
+
+PROCESS FLOW:
+1. Load department keywords from filters.yaml
+2. For each article:
+   a. Combine title + content + summary
+   b. Convert to lowercase
+   c. Count keyword matches per department
+   d. Apply scoring: title matches ×3, content matches ×1
+   e. Select department with highest score (>0)
+
+5.2 DEPARTMENT DETECTION SCORING
+---------------------------------
+Example Calculation:
+Article: "음악학과 입시 설명회 안내입니다. 음악 실기고사 일정..."
+Keywords: music = ["음악", "music", "실용음악", "성악"]
+
+Scoring:
+- "음악" in title: +3
+- "음악" in content: +1
+- Total: 4 points → music department
+
+5.3 FILTER CONFIGURATION FORMAT
+--------------------------------
+```yaml
+departments:
+  music:
+    name: "음악학과"
+    keywords: ["음악", "music", "실용음악", "성악", "작곡"]
+    emoji: "🎵"
+    priority: 1
+```
+
+6. NOTIFICATION SYSTEM
+===============================================================
+
+6.1 TELEGRAM NOTIFICATION FORMAT
+---------------------------------
+File: notifiers/telegram_notifier.py
+
+MESSAGE TEMPLATE:
+```
+{emoji} [새 입학 공고] {title}
+
+📌 부서/학과: {department_name}
+📝 내용: {content_preview}...
+🔗 링크: {url}
+
+#{department_key} #대학입시
+```
+
+6.2 NOTIFICATION CONDITIONS
+---------------------------
+Triggered when:
+1. New article detected (not in database)
+2. Department detected (not None)
+3. Test mode is False (--test flag not used)
+
+7. FACTORY PATTERN IMPLEMENTATION
+===============================================================
+
+7.1 SCRAPER FACTORY DESIGN
+---------------------------
+File: core/scraper_factory.py
+
+REGISTRATION PATTERN:
+```python
+def create_scraper(source_name: str, config: dict) -> Optional[BaseScraper]:
+    # Manual registration for each source
+    if source_name == "adiga":
+        from scrapers.adiga_scraper import AdigaScraper
+        return AdigaScraper(config)
+    
+    if source_name == "unn_news":
+        from scrapers.unn_news_scraper import UNNNewsScraper
+        return UNNNewsScraper(config)
+    
+    return None
+```
+
+7.2 FACTORY USAGE IN MONITOR ENGINE
+------------------------------------
+```python
+from core.scraper_factory import create_scraper
+
+for source_name, source_config in sources.items():
+    if source_config.get('enabled', False):
+        scraper = create_scraper(source_name, source_config)
+        if scraper:
+            articles = scraper.fetch_articles()
+            # Process articles...
+```
+
+8. EXECUTION PATTERNS
+===============================================================
+
+8.1 DIRECT EXECUTION PATTERNS
+------------------------------
+From project root:
+```bash
+# Test specific scraper
+PYTHONPATH=. python3 scrapers/adiga_scraper.py
+
+# Run monitor engine
+python3 core/monitor_engine.py --scrape-test
+```
+
+From other directories:
+```bash
+# Must set Python path
+cd /path/to/uni_monitoring.kr/scrapers
+PYTHONPATH=.. python3 adiga_scraper.py
+```
+
+8.2 MODULE EXECUTION PATTERNS
+------------------------------
+If scrapers/ has __init__.py:
+```bash
+python3 -m scrapers.adiga_scraper
+```
+
+If core/ has __init__.py:
+```bash
+python3 -m core.monitor_engine --test
+```
+
+9. FILE DEPENDENCIES MAP
+===============================================================
+
+9.1 CORE DEPENDENCY TREE
+-------------------------
+core/monitor_engine.py
+  ├── core/scraper_factory.py
+  │     ├── scrapers/*.py
+  │     │     ├── core/base_scraper.py
+  │     │     └── models/article.py
+  ├── core/filter_engine.py
+  │     └── config/filters.yaml
+  ├── core/state_manager.py
+  │     └── data/state.db
+  └── notifiers/telegram_notifier.py
+        └── config/config.yaml
+
+9.2 CONFIGURATION DEPENDENCIES
+------------------------------
+config/sources.yaml → core/scraper_factory.py
+config/filters.yaml → core/filter_engine.py  
+config/config.yaml → notifiers/telegram_notifier.py
+
+9.3 DATA FLOW DEPENDENCIES
+---------------------------
+Scraper → Filter Engine → State Manager → Notifier
+
+10. KNOWN IMPLEMENTATION PATTERNS
+===============================================================
+
+10.1 RSS FEED SCRAPER PATTERN
+------------------------------
+Common Structure:
+1. Use feedparser for parsing
+2. Handle field variations (summary/description/content)
+3. Clean HTML from content
+4. Parse dates with fallbacks
+5. Return standardized dictionary format
+
+10.2 SELENIUM SCRAPER PATTERN
+------------------------------
+Common Structure:
+1. Initialize WebDriver in _init_selenium()
+2. Handle cookie consent in _accept_cookies()
+3. Find elements with appropriate selectors
+4. Extract content from page source
+5. Always quit driver in finally block
+
+10.3 ERROR RECOVERY PATTERNS
+-----------------------------
+- Return empty list on total failure
+- Skip individual articles with parsing errors
+- Log detailed errors for debugging
+- Continue processing other sources
+
+===============================================================
+END OF STRUCTURE ANALYSIS
+===============================================================

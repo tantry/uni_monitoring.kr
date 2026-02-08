@@ -1,0 +1,549 @@
+===============================================================
+UNIVERSITY MONITORING SYSTEM - RSS FEED INTEGRATION GUIDE
+===============================================================
+Created: $(date)
+Version: 1.0
+Status: Technical Deep Dive
+===============================================================
+
+TABLE OF CONTENTS
+===============================================================
+1. PROJECT ARCHITECTURE OVERVIEW
+2. CORE COMPONENTS ANALYSIS
+3. RSS FEED INTEGRATION WORKFLOW
+4. SCRAPER TEMPLATE REQUIREMENTS
+5. CONFIGURATION MANAGEMENT
+6. TESTING PROCEDURES
+7. TROUBLESHOOTING
+8. FILE CHECKLISTS
+9. COMMON PATTERNS & SOLUTIONS
+
+===============================================================
+1. PROJECT ARCHITECTURE OVERVIEW
+===============================================================
+
+PROJECT STRUCTURE:
+uni_monitoring.kr/
+├── config/                     # YAML configuration files
+│   ├── config.yaml            # Main application config
+│   ├── sources.yaml           # Scraper source definitions
+│   └── filters.yaml           # Department filtering rules
+├── core/                      # Core business logic
+│   ├── base_scraper.py        # Abstract base class (ABC)
+│   ├── monitor_engine.py      # Main orchestrator
+│   ├── scraper_factory.py     # Factory pattern implementation
+│   ├── filter_engine.py       # Advanced filtering
+│   └── state_manager.py       # SQLite state management
+├── models/                    # Data models (Pydantic)
+│   └── article.py             # Article data class
+├── scrapers/                  # Site-specific implementations
+│   ├── adiga_scraper.py       # ✅ Working example (Selenium)
+│   ├── scraper_template.py    # ⭐ Template for new scrapers
+│   └── [new_scraper].py       # New scraper implementations
+├── notifiers/                 # Notification handlers
+│   └── telegram_notifier.py   # Telegram integration
+└── docs/                      # Documentation (this folder)
+
+ARCHITECTURAL PATTERN: Factory Pattern with Abstract Base Class
+- core.scraper_factory.py creates scraper instances dynamically
+- All scrapers inherit from core.base_scraper.BaseScraper
+- Configuration-driven source management
+
+===============================================================
+2. CORE COMPONENTS ANALYSIS
+===============================================================
+
+2.1 BASE SCRAPER ABSTRACT CLASS (core/base_scraper.py)
+-------------------------------------------------------
+REQUIRED METHODS:
+- __init__(self, config: Dict[str, Any])
+- fetch_articles(self) -> List[Dict[str, Any]]
+- parse_article(self, raw_data: Dict[str, Any]) -> Article
+- get_source_name(self) -> str
+
+PROPERTIES:
+- self.config: Dictionary from sources.yaml
+- self.base_url: URL from config
+- self.session: requests.Session instance
+- self.logger: Class-specific logger
+
+2.2 MONITOR ENGINE (core/monitor_engine.py)
+--------------------------------------------
+COMMAND LINE ARGUMENTS:
+- --test: Test mode (no notifications)
+- --scrape-test: Test scraping only
+- NO --source flag: Scrapes all enabled sources
+
+WORKFLOW:
+1. Load config from config/sources.yaml
+2. For each enabled source:
+   a. Create scraper via scraper_factory.create_scraper()
+   b. Call scraper.fetch_articles()
+   c. Apply filters via filter_engine
+   d. Check duplicates via state_manager
+   e. Send notifications via notifiers
+
+2.3 SCRAPER FACTORY (core/scraper_factory.py)
+----------------------------------------------
+REGISTRATION PATTERN:
+```python
+from scrapers.adiga_scraper import AdigaScraper
+from scrapers.unn_news_scraper import UNNNewsScraper
+
+def create_scraper(source_name: str, config: dict) -> Optional[BaseScraper]:
+    if source_name == "adiga":
+        return AdigaScraper(config)
+    if source_name == "unn_news":
+        return UNNNewsScraper(config)
+    return None
+```
+
+2.4 FILTER ENGINE (core/filter_engine.py)
+------------------------------------------
+DEPARTMENT FILTERING:
+- Uses config/filters.yaml keywords
+- Each department has keyword list and priority
+- Score-based detection system
+
+===============================================================
+3. RSS FEED INTEGRATION WORKFLOW
+===============================================================
+
+STEP 1: ANALYZE RSS FEED STRUCTURE
+-----------------------------------
+```bash
+# Check feed structure
+python3 -c "import feedparser; f=feedparser.parse('URL'); print('Entries:', len(f.entries)); print('Keys:', list(f.entries[0].keys()) if f.entries else 'None')"
+
+# Required fields check:
+# - title: Article title
+# - link: Article URL  
+# - summary OR description: Article content
+# - published: Publication date
+# - Optional: author, categories, id
+```
+
+STEP 2: CREATE SCRAPER IMPLEMENTATION
+--------------------------------------
+File: scrapers/[source_name]_scraper.py
+
+CRITICAL REQUIREMENTS:
+1. Must inherit from BaseScraper
+2. Must implement all abstract methods
+3. Must handle feedparser's field variations
+4. Must clean HTML from summary/description
+
+STEP 3: UPDATE CONFIGURATION
+-----------------------------
+File: config/sources.yaml
+```yaml
+source_name:              # Lowercase, no spaces
+  name: "Display Name"    # Human-readable name
+  url: "https://..."      # RSS feed URL
+  enabled: true           # Enable/disable
+  scrape_interval: 1800   # Seconds (30 minutes)
+  description: "..."      # Optional description
+  type: "rss"            # Optional type identifier
+```
+
+STEP 4: REGISTER IN FACTORY
+----------------------------
+File: core/scraper_factory.py
+```python
+# Add import
+from scrapers.source_name_scraper import SourceNameScraper
+
+# Add to create_scraper function
+if source_name == "source_name":
+    return SourceNameScraper(config)
+```
+
+STEP 5: TEST INTEGRATION
+-------------------------
+```bash
+# Test scraper directly (from project root)
+PYTHONPATH=. python3 scrapers/source_name_scraper.py
+
+# Test through monitor engine
+python3 core/monitor_engine.py --scrape-test
+
+# Enable debug logging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+===============================================================
+4. SCRAPER TEMPLATE REQUIREMENTS
+===============================================================
+
+4.1 RSS-SPECIFIC IMPLEMENTATION PATTERN
+----------------------------------------
+```python
+class RSSFeedScraper(BaseScraper):
+    def __init__(self, config):
+        super().__init__(config)
+        self.source_name = "source_name"
+        self.base_url = config.get('url', '')
+        
+        # RSS-specific headers
+        self.session.headers.update({
+            'Accept': 'application/rss+xml, application/xml, */*',
+            'User-Agent': 'uni_monitoring.kr/1.0',
+        })
+    
+    def fetch_articles(self) -> List[Dict]:
+        import feedparser
+        feed = feedparser.parse(self.base_url)
+        
+        articles = []
+        for entry in feed.entries:
+            article_data = {
+                'title': entry.get('title', '').strip(),
+                'url': entry.get('link', ''),
+                'content': self._extract_content(entry),
+                'published_date': self._parse_date(entry),
+                'source': self.source_name,
+            }
+            articles.append(article_data)
+        
+        return articles
+    
+    def _extract_content(self, entry) -> str:
+        """Handle RSS field variations"""
+        # Priority 1: summary field
+        if hasattr(entry, 'summary') and entry.summary:
+            return self._clean_html(entry.summary)
+        
+        # Priority 2: description field  
+        if hasattr(entry, 'description') and entry.description:
+            return self._clean_html(entry.description)
+        
+        # Fallback: title
+        return entry.get('title', '')
+```
+
+4.2 FIELD EXTRACTION METHODS
+-----------------------------
+REQUIRED FIELD HANDLING:
+- title: Always present, must strip()
+- link: Check entry.link then entry.links[]
+- content: summary → description → title
+- date: published_parsed → published → updated_parsed
+- author: authors[] → author → default string
+
+4.3 HTML CLEANING UTILITY
+--------------------------
+```python
+def _clean_html(self, html_text: str) -> str:
+    import re
+    # Remove script/style tags
+    html_text = re.sub(r'<(script|style).*?>.*?</\1>', '', 
+                      html_text, flags=re.DOTALL | re.IGNORECASE)
+    # Remove all other HTML tags
+    html_text = re.sub(r'<[^>]+>', ' ', html_text)
+    # Normalize whitespace
+    html_text = re.sub(r'\s+', ' ', html_text).strip()
+    return html_text
+```
+
+===============================================================
+5. CONFIGURATION MANAGEMENT
+===============================================================
+
+5.1 SOURCES.YAML STRUCTURE
+---------------------------
+```yaml
+# REQUIRED FIELDS:
+source_key:                # Machine-readable key (snake_case)
+  name: "Human Readable"   # Display name
+  url: "https://..."       # Feed URL
+  enabled: true/false      # Activation status
+  
+# OPTIONAL FIELDS:
+  scrape_interval: 1800    # Seconds (default: 3600)
+  description: "..."       # Documentation
+  type: "rss"             # Source type hint
+  timeout: 30             # Request timeout
+  retries: 3              # Retry attempts
+```
+
+5.2 FILTERS.YAML STRUCTURE
+---------------------------
+```yaml
+departments:
+  department_key:          # Internal key (e.g., 'music')
+    name: "Display Name"   # Human name (e.g., '음악학과')
+    keywords: []           # Korean/English keywords
+    emoji: "🎵"            # Notification emoji
+    priority: 1            # Display priority
+```
+
+5.3 FILTERING LOGIC
+--------------------
+- Content = title + content + summary
+- Lowercase conversion for case-insensitive matching
+- Title matches score higher (3x) than content matches (1x)
+- Department with highest score wins
+- Minimum score threshold: > 0
+
+===============================================================
+6. TESTING PROCEDURES
+===============================================================
+
+6.1 PRE-INTEGRATION TESTS
+--------------------------
+```bash
+# 1. Feed accessibility test
+curl -I "https://feed.url/rss.xml"
+
+# 2. Feed structure test
+python3 -c "import feedparser; f=feedparser.parse('URL'); print(f.entries[0].keys() if f.entries else 'No entries')"
+
+# 3. Dependency check
+python3 -c "import feedparser, requests, bs4; print('Dependencies OK')"
+```
+
+6.2 UNIT TESTING (SCRAPER LEVEL)
+---------------------------------
+```bash
+# Test from project root
+cd /path/to/uni_monitoring.kr
+PYTHONPATH=. python3 scrapers/new_scraper.py
+
+# Expected output:
+# 1. Connection successful
+# 2. Articles parsed (count > 0)
+# 3. Article structure valid
+# 4. Department detection working
+```
+
+6.3 INTEGRATION TESTING
+------------------------
+```bash
+# Test through factory
+python3 -c "
+import sys
+sys.path.insert(0, '.')
+from core.scraper_factory import create_scraper
+scraper = create_scraper('source_name', {'url': '...'})
+print('Factory OK' if scraper else 'Factory failed')
+"
+
+# Test with monitor engine
+python3 core/monitor_engine.py --scrape-test
+
+# Check logs for errors
+tail -f logs/monitor.log
+```
+
+6.4 VALIDATION CHECKS
+----------------------
+- Article count > 0
+- All articles have title and URL
+- Dates parsed correctly
+- Content extracted (not empty)
+- No HTML tags in content
+- Department detection produces results
+
+===============================================================
+7. TROUBLESHOOTING
+===============================================================
+
+7.1 COMMON ERRORS & SOLUTIONS
+------------------------------
+
+ERROR: "ModuleNotFoundError: No module named 'core'"
+CAUSE: Running from wrong directory or Python path issue
+SOLUTION:
+```bash
+# Run from project root
+cd /path/to/uni_monitoring.kr
+PYTHONPATH=. python3 script.py
+
+# Or use module syntax
+python3 -m core.monitor_engine --test
+```
+
+ERROR: "403 Forbidden" on RSS feed
+CAUSE: Server blocking based on User-Agent
+SOLUTION:
+```python
+self.session.headers.update({
+    'User-Agent': 'Mozilla/5.0 (compatible; uni_monitoring.kr/1.0)',
+    'Accept': 'application/rss+xml, application/xml, */*',
+})
+```
+
+ERROR: "No entries found" but feed works in browser
+CAUSE: feedparser parsing issue or invalid XML
+SOLUTION:
+```python
+# Debug feedparser response
+feed = feedparser.parse(url)
+print(feed.version)  # Should show 'rss' or 'atom'
+print(feed.bozo)     # Should be 0 (no errors)
+if feed.bozo:
+    print(feed.bozo_exception)  # Show parsing error
+```
+
+ERROR: Dates not parsing correctly
+CAUSE: RSS date format variations
+SOLUTION:
+```python
+def _parse_date(self, entry):
+    # Try parsed date first
+    if hasattr(entry, 'published_parsed') and entry.published_parsed:
+        from datetime import datetime
+        return datetime.fromtimestamp(
+            time.mktime(entry.published_parsed)
+        ).strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Fallback to raw string
+    return entry.get('published', 'Unknown date')
+```
+
+7.2 DEBUGGING TECHNIQUES
+-------------------------
+```python
+# Enable debug logging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Inspect feedparser response
+import feedparser
+feed = feedparser.parse(url)
+print('Feed keys:', feed.keys())
+print('Feed version:', feed.version)
+print('Bozo flag:', feed.bozo)
+if feed.bozo:
+    print('Bozo exception:', feed.bozo_exception)
+
+# Save raw response for inspection
+with open('debug_feed.xml', 'w', encoding='utf-8') as f:
+    f.write(requests.get(url).text)
+```
+
+===============================================================
+8. FILE CHECKLISTS
+===============================================================
+
+8.1 MINIMAL FILES FOR NEW RSS FEED
+-----------------------------------
+[ ] scrapers/[source]_scraper.py      # Scraper implementation
+[ ] config/sources.yaml               # Source configuration  
+[ ] core/scraper_factory.py           # Factory registration
+
+8.2 SCRAPER FILE CHECKLIST
+---------------------------
+[ ] Imports: feedparser, BaseScraper, Article
+[ ] Class name: [Source]Scraper(BaseScraper)
+[ ] __init__: Sets source_name, base_url, headers
+[ ] fetch_articles(): Returns List[Dict] with articles
+[ ] parse_article(): Returns Article object
+[ ] get_source_name(): Returns string identifier
+[ ] _extract_content(): Handles RSS field variations
+[ ] _parse_date(): Robust date parsing
+[ ] _clean_html(): HTML tag removal
+
+8.3 CONFIGURATION CHECKLIST
+----------------------------
+[ ] sources.yaml: Entry with name, url, enabled
+[ ] Test: python3 core/monitor_engine.py --scrape-test
+[ ] Verify: Source appears in logs without errors
+
+8.4 FACTORY REGISTRATION CHECKLIST
+-----------------------------------
+[ ] Import: from scrapers.[source]_scraper import [Source]Scraper
+[ ] Registration: if source_name == "[source]": return [Source]Scraper(config)
+[ ] Test: Factory creates scraper instance successfully
+
+===============================================================
+9. COMMON PATTERNS & SOLUTIONS
+===============================================================
+
+9.1 RSS FEED VARIATIONS ENCOUNTERED
+------------------------------------
+PATTERN 1: Standard RSS 2.0
+- Fields: title, link, description, pubDate
+- Content: In description field
+- Use: feedparser handles natively
+
+PATTERN 2: Atom Feed
+- Fields: title, link, summary, published
+- Content: In summary field
+- Use: feedparser handles natively
+
+PATTERN 3: Custom XML
+- Fields: item/title, item/link, item/content:encoded
+- Content: In content:encoded with HTML
+- Use: entry.get('content', [{}])[0].get('value')
+
+PATTERN 4: CDATA Content
+- Fields: <![CDATA[...]]> wrapped content
+- Content: feedparser automatically extracts
+- Use: Standard extraction works
+
+9.2 DEPARTMENT DETECTION PATTERNS
+----------------------------------
+HIGH CONFIDENCE PATTERNS:
+- Department name in title: "음악학과 입시 설명회"
+- Specific department keywords: "실용음악", "국어국문학과"
+- Multiple keyword matches in content
+
+LOW CONFIDENCE PATTERNS:
+- Single common keyword: "음악" (could be general)
+- No department-specific terms
+- General university announcements
+
+9.3 PERFORMANCE OPTIMIZATIONS
+------------------------------
+FOR LARGE FEEDS (>100 items):
+- Limit processed items in fetch_articles()
+- Implement pagination if feed supports it
+- Cache feed responses with timestamp
+- Use async requests for multiple feeds
+
+FOR FREQUENT UPDATES:
+- Use ETag and Last-Modified headers
+- Implement conditional GET requests
+- Store feed hashes to detect no changes
+
+===============================================================
+APPENDIX A: QUICK REFERENCE COMMANDS
+===============================================================
+
+# Project navigation
+cd /path/to/uni_monitoring.kr          # Always start here
+pwd                                    # Verify location
+ls -la core/                           # Check core module
+
+# Testing commands
+PYTHONPATH=. python3 scrapers/test.py  # Run from any dir
+python3 core/monitor_engine.py --help # See available args
+python3 core/monitor_engine.py --scrape-test  # Test all sources
+
+# Dependency management
+pip install feedparser python-dateutil requests beautifulsoup4
+pip freeze | grep -E "(feedparser|requests)"  # Check installs
+
+# Debugging
+import logging
+logging.basicConfig(level=logging.DEBUG)  # Enable debug logs
+
+python3 -c "import feedparser; f=feedparser.parse('URL'); print(f.bozo, f.version, len(f.entries))"  # Feed health check
+
+===============================================================
+APPENDIX B: EXAMPLE UNN_NEWS IMPLEMENTATION
+===============================================================
+
+See: scrapers/unn_news_scraper.py for complete working example
+Key patterns:
+- Uses feedparser for RSS parsing
+- Handles missing 'content' field (uses 'summary')
+- Robust date parsing with fallbacks
+- HTML cleaning for summary content
+- Follows BaseScraper interface exactly
+
+===============================================================
+END OF DOCUMENT
+===============================================================

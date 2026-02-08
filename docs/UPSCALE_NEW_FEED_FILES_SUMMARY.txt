@@ -1,0 +1,146 @@
+===============================================================
+FILES REQUIRED FOR NEW RSS FEED INTEGRATION
+===============================================================
+
+MANDATORY FILES (3 files must be created/edited):
+=================================================
+
+1. SCRAPER IMPLEMENTATION FILE
+   Location: scrapers/[source_name]_scraper.py
+   Purpose: Contains the scraper class implementation
+   Template: Use scrapers/scraper_template.py as base
+   Requirements:
+   - Must inherit from BaseScraper
+   - Must implement fetch_articles(), parse_article(), get_source_name()
+   - Must use feedparser for RSS parsing
+   - Must handle RSS field variations
+
+2. SOURCE CONFIGURATION ENTRY
+   Location: config/sources.yaml
+   Purpose: Defines the RSS feed source
+   Format:
+   source_key:
+     name: "Human Readable Name"
+     url: "https://feed.url/rss.xml"
+     enabled: true
+     scrape_interval: 1800
+
+3. FACTORY REGISTRATION
+   Location: core/scraper_factory.py
+   Purpose: Registers scraper with factory system
+   Two edits required:
+   a) Import line (add to imports section):
+      from scrapers.[source_name]_scraper import [SourceName]Scraper
+   b) Registration (add to create_scraper function):
+      if source_name == "source_key":
+          return [SourceName]Scraper(config)
+
+OPTIONAL FILES:
+===============
+- requirements.txt: Add feedparser if not already present
+- README.md: Update with new source information
+- tests/test_[source_name].py: Unit tests for the scraper
+
+FILE TEMPLATES:
+===============
+
+A. Basic RSS Scraper Template (scrapers/new_feed_scraper.py):
+-------------------------------------------------------------
+"""
+New Feed RSS Scraper
+"""
+from core.base_scraper import BaseScraper
+from models.article import Article
+import feedparser
+import logging
+
+logger = logging.getLogger(__name__)
+
+class NewFeedScraper(BaseScraper):
+    def __init__(self, config):
+        super().__init__(config)
+        self.source_name = "new_feed"
+        self.base_url = config.get('url', '')
+        
+    def fetch_articles(self):
+        feed = feedparser.parse(self.base_url)
+        articles = []
+        for entry in feed.entries:
+            articles.append({
+                'title': entry.get('title', '').strip(),
+                'url': entry.get('link', ''),
+                'content': self._extract_content(entry),
+                'published_date': self._parse_date(entry),
+                'source': self.source_name,
+            })
+        return articles
+    
+    def parse_article(self, raw_data):
+        return Article(**raw_data)
+    
+    def get_source_name(self):
+        return self.source_name
+    
+    def _extract_content(self, entry):
+        # Implementation here
+        pass
+    
+    def _parse_date(self, entry):
+        # Implementation here
+        pass
+
+B. sources.yaml Entry Template:
+-------------------------------
+new_feed:
+  name: "New Feed Name"
+  url: "https://feed.url/rss.xml"
+  enabled: true
+  scrape_interval: 1800
+  description: "Optional description"
+
+C. Factory Registration Template:
+---------------------------------
+# In core/scraper_factory.py:
+
+# Add to imports:
+from scrapers.new_feed_scraper import NewFeedScraper
+
+# Add to create_scraper function:
+if source_name == "new_feed":
+    return NewFeedScraper(config)
+
+TESTING SEQUENCE:
+=================
+1. python3 -c "import feedparser; print('Dependency OK')"
+2. PYTHONPATH=. python3 scrapers/new_feed_scraper.py
+3. python3 -c "
+import sys
+sys.path.insert(0, '.')
+from core.scraper_factory import create_scraper
+scraper = create_scraper('new_feed', {'url': '...'})
+print('Factory OK' if scraper else 'Factory failed')
+"
+4. python3 core/monitor_engine.py --scrape-test
+
+COMMON ERROR PATTERNS:
+======================
+Error: "ModuleNotFoundError: No module named 'core'"
+Fix: Run from project root with PYTHONPATH=.
+
+Error: "403 Forbidden" on RSS feed
+Fix: Add proper User-Agent headers in scraper __init__
+
+Error: No articles found but feed works in browser
+Fix: Check feed.bozo and feed.bozo_exception in feedparser response
+
+COMPLETION CHECKLIST:
+=====================
+[ ] 1. Scraper file created in scrapers/
+[ ] 2. sources.yaml entry added
+[ ] 3. scraper_factory.py updated with import and registration
+[ ] 4. Direct scraper test successful
+[ ] 5. Factory creates scraper successfully
+[ ] 6. Monitor engine includes source in --scrape-test
+[ ] 7. Articles have title, url, content, date
+[ ] 8. Department detection works (some articles categorized)
+[ ] 9. No errors in logs/monitor.log
