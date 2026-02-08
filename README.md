@@ -27,6 +27,7 @@ pip install requests beautifulsoup4 pyyaml selenium
 ```bash
 git clone https://github.com/tantry/uni_monitoring.kr.git
 cd uni_monitoring.kr
+pip install -r requirements.txt
 ```
 
 ### Configuration
@@ -41,6 +42,18 @@ cd uni_monitoring.kr
 telegram:
   bot_token: "YOUR_BOT_TOKEN"
   chat_id: "YOUR_CHAT_ID"
+database:
+  path: "data/state.db"
+logging:
+  level: "INFO"
+  file: "logs/monitor.log"
+```
+
+3. **Copy example configs**:
+```bash
+cp config/config.example.yaml config/config.yaml
+cp config/sources.example.yaml config/sources.yaml
+cp config/filters.example.yaml config/filters.yaml
 ```
 
 ### Run Monitor
@@ -50,22 +63,49 @@ python3 core/monitor_engine.py --test
 
 # Production mode
 ./check_now.sh
+
+# Legacy mode
+python3 multi_monitor.py
 ```
 
 ## 📋 Project Structure
 ```
 uni_monitoring.kr/
-├── config/                     # YAML configurations
-├── core/                       # Core engine (monitor, filters, factory)
-├── models/                     # Data models (Article)
-├── scrapers/                   # Site-specific scrapers
+├── config/                     # Configuration management
+│   ├── config.yaml            # Main configuration
+│   ├── sources.yaml           # Scraper source definitions
+│   └── filters.yaml           # Department filtering rules
+├── core/                      # Core business logic
+│   ├── base_scraper.py        # Abstract base class for all scrapers
+│   ├── monitor_engine.py      # Main monitoring orchestrator
+│   ├── scraper_factory.py     # Factory for creating scraper instances
+│   ├── filter_engine.py       # Advanced filtering engine
+│   └── state_manager.py       # Database-backed state management
+├── models/                    # Data models
+│   └── article.py             # Article data class (Pydantic model)
+├── scrapers/                  # Site-specific scrapers
 │   ├── adiga_scraper.py       # ✅ Working (Selenium + popups)
-│   └── scraper_template.py    # Template for new scrapers
-├── notifiers/                  # Telegram notifications
-├── data/                       # SQLite database
-├── logs/                       # Application logs
-├── SCRAPER_DEVELOPMENT_GUIDE.md  # ⭐ Critical reference
-└── check_now.sh               # Main monitoring script
+│   ├── scraper_template.py    # Template for new scrapers (⭐ Use this!)
+│   └── scraper_base.py        # Legacy base scraper (deprecated)
+├── notifiers/                 # Telegram notifications
+│   └── telegram_notifier.py   # Telegram notification handler
+├── filters/                   # Filter implementations
+│   └── department_filter.py   # Department-based filtering
+├── tests/                     # Test suite
+├── utils/                     # Utility functions
+├── scripts/                   # Utility scripts
+├── data/                      # Data storage
+│   ├── state.db               # SQLite database (auto-generated)
+│   └── adiga/                 # Adiga-specific data
+├── logs/                      # Log files
+│   └── monitor.log            # Application logs (auto-generated)
+├── multi_monitor.py           # Legacy monitoring orchestrator
+├── push_to_github_safe.sh     # Safe GitHub push with review steps
+├── setup_github_safe.sh       # Complete GitHub setup script
+├── push_to_github.sh          # Original GitHub push script
+├── check_now.sh               # Main monitoring script
+├── SCRAPER_DEVELOPMENT_GUIDE.md  # ⭐ Critical reference for scraper development
+└── README.md                  # This file
 ```
 
 ## 🔧 Adiga Scraper - Technical Details
@@ -116,6 +156,80 @@ for link in popup_links:
 4. Add to `config/sources.yaml`
 5. Test with monitor: `python3 core/monitor_engine.py --test`
 
+### Scraper Template Structure
+```python
+"""
+Template for new scraper implementations
+"""
+import logging
+from typing import List, Dict, Optional
+from core.base_scraper import BaseScraper
+from models.article import Article
+
+logger = logging.getLogger(__name__)
+
+class NewSourceScraper(BaseScraper):
+    """Scraper for [Source Name]"""
+    
+    def __init__(self, config: dict):
+        super().__init__(config)
+        self.base_url = "https://example.com"
+        self.source_name = "new_source"
+    
+    def fetch_articles(self) -> List[Dict]:
+        # Implementation here
+        pass
+    
+    def parse_article(self, raw_data: Dict) -> Article:
+        # Parse raw article data into Article model
+        pass
+    
+    def detect_department(self, article_data: Dict) -> Optional[str]:
+        """
+        Detect which department this article belongs to.
+        
+        Returns:
+            Department name or None
+        """
+        content = f"{article_data.get('title', '')} {article_data.get('content', '')}"
+        content_lower = content.lower()
+        
+        # Department keyword mapping
+        department_keywords = {
+            'music': ['음악', '실용음악', '성악', '작곡', 'music'],
+            'korean': ['한국어', '국어국문', '국문학', '국어'],
+            'english': ['영어', '영어영문', '영문학', 'english'],
+            'liberal': ['인문', '인문학', '교양교육', '교양'],
+        }
+        
+        for dept, keywords in department_keywords.items():
+            if any(keyword in content_lower for keyword in keywords):
+                return dept
+        
+        return None
+```
+
+### Adding New Source Configuration
+1. Add source to `config/sources.yaml`:
+```yaml
+new_source:
+  name: "New Source Name"
+  url: "https://example.com"
+  enabled: true
+  scrape_interval: 3600  # seconds
+  description: "Description of the source"
+```
+
+2. Register scraper in `core/scraper_factory.py`:
+```python
+from scrapers.new_source_scraper import NewSourceScraper
+
+def create_scraper(source_name: str, config: dict) -> Optional[BaseScraper]:
+    if source_name == "new_source":
+        return NewSourceScraper(config)
+    # ... existing scrapers
+```
+
 ## 🐛 Troubleshooting
 
 ### Selenium Issues
@@ -153,32 +267,100 @@ curl "https://api.telegram.org/bot<YOUR_TOKEN>/getMe"
 tail -f logs/monitor.log
 ```
 
-## 🎯 Current Status
+## 🤖 Telegram Integration
 
-### ✅ Working
-- Adiga scraper (Selenium + popup extraction)
-- Telegram notifications
-- Duplicate detection
-- Department filtering
-- Safe GitHub integration
+The system sends formatted Telegram messages:
 
-### 📋 Next Steps
-- Add more university sources
-- Implement cron automation
-- Web dashboard for monitoring
+```
+🎵 [새 입학 공고] 서울대학교 음악학과 추가모집
 
-## 📖 Documentation
+📌 부서/학과: music
+📝 내용: 서울대학교 음악학과에서 2026학년도 추가모집을 실시합니다...
+🔗 링크: https://adiga.kr/ArticleDetail.do?articleID=26546
 
-- **SCRAPER_DEVELOPMENT_GUIDE.md** - Critical patterns and solutions
-- **scrapers/scraper_template.py** - Comprehensive template with examples
-- **config/** - YAML configuration examples
+#대학입시 #music
+```
+
+## 📊 Current Data Sources
+
+### Adiga (어디가)
+* **URL**: https://www.adiga.kr
+* **Status**: ✅ Active (Selenium + Popup Solution Working)
+* **Coverage**: General admission news and announcements
+* **Pattern**: JavaScript popups requiring Selenium click simulation
+
+### Target Universities for Future Development
+1. **서울대학교** - https://admission.snu.ac.kr
+2. **연세대학교** - https://admission.yonsei.ac.kr  
+3. **고려대학교** - https://admission.korea.ac.kr
+4. **한국대학교** - Individual department pages
+
+## 🎯 Architecture Status
+
+### ✅ Completed Foundation
+* **New Core Architecture**: `core/base_scraper.py`, `core/filter_engine.py`, `core/scraper_factory.py`
+* **Enhanced Configuration**: YAML-based configs in `config/` directory
+* **Data Models**: `models/article.py` for standardized article representation
+* **State Management**: SQLite database for reliable state tracking
+* **Safe GitHub Integration**: Interactive push scripts with review steps
+* **Adiga Scraper**: Working Selenium implementation with popup handling
+
+### 🔄 In Progress
+* **Content Discovery**: Finding actual admission announcement URLs on Adiga.kr
+* **Template System**: Creating reusable scraper templates
+* **Deadline System Integration**: Integrating deadline tracking into main architecture
+
+### 📋 Pending
+* **Additional Sources**: Implementing scrapers for target universities
+* **RSS Sources**: Adding RSS feed monitoring capabilities
+* **Testing Framework**: Comprehensive test suite
+* **Web Dashboard**: Monitoring status interface
+
+## 🔄 Upcoming: Deadline System Integration
+
+The deadline tracking system will be integrated into the main architecture:
+
+**Plan**:
+- **Phase 1**: Fix admission scraper (✅ Completed)
+- **Phase 2**: Create `deadline_source.py` and integrate with monitor engine
+- **Phase 3**: Unified notification pipeline for both admission news and deadlines
+
+**Benefits**:
+- Unified notification pipeline
+- Shared duplicate detection
+- Single database for all content
+- Flexible scheduling options
+
+## 📈 Future Enhancements
+
+* **Web Dashboard**: Real-time monitoring status
+* **Email Notifications**: Alternative to Telegram
+* **REST API**: External integrations
+* **Advanced Filtering**: 지역, 전형별, 모집인원
+* **Mobile App**: Push notifications
+* **Multi-language Support**: English/Korean interface
+* **RSS Feed Support**: Monitor university RSS feeds
+* **Automated Deadline Updates**: Scrape deadline information
 
 ## 🤝 Contributing
 
-1. Read SCRAPER_DEVELOPMENT_GUIDE.md
-2. Use scraper_template.py
-3. Test thoroughly before submitting
-4. Document any new patterns discovered
+1. **Read** `SCRAPER_DEVELOPMENT_GUIDE.md` first!
+2. **Use** `scrapers/scraper_template.py` for new scrapers
+3. **Test** thoroughly before submitting
+4. **Document** any new patterns discovered
+
+### Contribution Guidelines
+* **New scrapers**: Follow `scraper_template.py` structure
+* **Department keywords**: Add to `config/filters.yaml`
+* **Testing**: Test with `python core/monitor_engine.py --test` before submitting
+* **Documentation**: Update README with new source information
+
+## 📖 Documentation
+
+- **SCRAPER_DEVELOPMENT_GUIDE.md** - Critical patterns and solutions for scraper development
+- **scrapers/scraper_template.py** - Comprehensive template with examples
+- **config/** - YAML configuration examples
+- **DEADLINE_INTEGRATION_PLAN.md** - Plan for integrating deadline tracking
 
 ## 📄 License
 
@@ -188,4 +370,6 @@ MIT License
 
 **Last Updated**: 08 February 2026  
 **Maintainer**: tantry  
-**Status**: ✅ Production Ready
+**Status**: ✅ Production Ready (Admission Scraper Working)  
+**Next Phase**: Deadline System Integration & RSS Sources  
+**GitHub**: https://github.com/tantry/uni_monitoring.kr
