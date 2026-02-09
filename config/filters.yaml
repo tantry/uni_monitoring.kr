@@ -1,3 +1,7 @@
+# Filter matching configuration
+matching:
+  min_confidence: 0.15  # Threshold: any keyword match counts
+
 departments:
   music:
     name: "음악학과"

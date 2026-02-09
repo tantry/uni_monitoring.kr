@@ -42,11 +42,18 @@ class FilterEngine:
         self.logger = logging.getLogger("filter_engine")
         self._setup_logger()
         
-        # Load initial configuration
+        # Load configuration first
+        self.config_data = self._load_config()
+        
+        # Load departments from config
         self.departments = self._load_departments()
-        self.match_strategy = MatchStrategy.CONTAINS
-        self.min_confidence = 0.7
-        self.enable_fallback = True
+        
+        # Load matching strategy from config
+        matching_config = self.config_data.get('matching', {})
+        strategy_name = matching_config.get('strategy', 'contains').upper()
+        self.match_strategy = MatchStrategy[strategy_name]
+        self.min_confidence = float(matching_config.get('min_confidence', 0.15))
+        self.enable_fallback = matching_config.get('enable_fallback', True)
         
         self.logger.info(f"Initialized FilterEngine with {len(self.departments)} departments")
     
@@ -60,6 +67,16 @@ class FilterEngine:
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load complete filter configuration from YAML"""
+        try:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f) or {}
+        except Exception as e:
+            self.logger.warning(f"Could not load config: {e}, using defaults")
+            return {}
+
     
     def _load_departments(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -195,17 +212,30 @@ class FilterEngine:
         except Exception as e:
             self.logger.error(f"Failed to save configuration: {e}")
     
-    def detect_department(self, article_text: str, title: Optional[str] = None) -> Optional[str]:
+    def detect_department(self, article, title=None):
         """
-        Detect which department an article belongs to
+        Detect which department an article belongs to.
+        
+        Accepts either an Article object or a dictionary.
         
         Args:
-            article_text: Article content text
-            title: Article title (optional, for additional matching)
+            article: Article object or dict with 'title' and 'content' keys
+            title: Optional title override (for backward compatibility)
             
         Returns:
             Department identifier or None if no match
         """
+        # Handle both Article objects and dictionaries
+        if isinstance(article, dict):
+            article_text = article.get('content', '')
+            if not title:
+                title = article.get('title')
+        else:
+            # Assume it's an Article object
+            article_text = article.content if hasattr(article, 'content') else str(article)
+            if not title and hasattr(article, 'title'):
+                title = article.title
+        
         if not article_text:
             return None
         
@@ -222,29 +252,19 @@ class FilterEngine:
                 continue
             
             confidence = self._calculate_match_confidence(
-                search_text, 
+                search_text,
                 dept_config['keywords'],
                 dept_config.get('weight', 1.0)
             )
             
             if confidence >= self.min_confidence:
-                matches[dept_id] = {
-                    'confidence': confidence,
-                    'priority': dept_config.get('priority', 99)
-                }
+                matches[dept_id] = confidence
         
-        if not matches:
-            return None
+        # Return department with highest confidence
+        if matches:
+            return max(matches, key=matches.get)
         
-        # Select best match (highest confidence, then highest priority)
-        best_match = max(
-            matches.items(),
-            key=lambda x: (x[1]['confidence'], -x[1]['priority'])
-        )[0]
-        
-        self.logger.debug(f"Matched '{best_match}' with confidence {matches[best_match]['confidence']}")
-        return best_match
-    
+        return None
     def _calculate_match_confidence(self, text: str, keywords: List[str], weight: float = 1.0) -> float:
         """
         Calculate match confidence score

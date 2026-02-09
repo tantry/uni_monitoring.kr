@@ -123,6 +123,15 @@ class ScraperFactory:
             if config.get('enabled', False)
         ]
     
+    def list_available_scrapers(self) -> List[str]:
+        """
+        List all available scraper source IDs.
+        
+        Returns:
+            List of source identifiers
+        """
+        return self.get_available_sources()
+
     def get_source_config(self, source_id: str) -> Optional[Dict[str, Any]]:
         """
         Get configuration for a specific source

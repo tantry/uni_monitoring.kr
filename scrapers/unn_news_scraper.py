@@ -203,9 +203,9 @@ class UNNNewsScraper(BaseScraper):
             content=raw_data.get('content', ''),
             source=self.source_name,
             published_date=raw_data.get('published_date', datetime.now().strftime('%Y-%m-%d')),
-            author=raw_data.get('author', ''),
-            categories=raw_data.get('categories', []),
             metadata={
+                'author': raw_data.get('author', ''),
+                'categories': raw_data.get('categories', []),
                 'summary': raw_data.get('summary', ''),
                 'rss_id': raw_data.get('rss_id', '')
             }

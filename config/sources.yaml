@@ -3,45 +3,47 @@ sources:
     name: "Adiga University Portal"
     url: "https://www.adiga.kr"
     enabled: true
-# Add UNN News to the sources list
-unn_news:
-  name: "UNN News"
-  url: "https://news.unn.net/rss/allArticle.xml"
-  enabled: true
-  scrape_interval: 1800  # 30 minutes
-  description: "UNN News RSS feed for university announcements"
-  type: "rss"
-
-# Keep existing sources (like adiga)...    
-    # CRITICAL: New URL pointing to actual notice board (NOT homepage)
+    scraper_class: "adiga_scraper"
+    scrape_interval: 1800
+    description: "Adiga.kr university announcements"
     announcement_paths:
       - path: "/cct/pbf/noticeList.do"
         menu_id: "PCCCTPBF1000"
         name: "공지사항 (Main Notices)"
         enabled: true
-      
       - path: "/uct/nmg/enw/newsView.do"
         menu_id: "PCUCTNMG2000"
         name: "대입주요자료 (Admission News)"
         enabled: true
-    
-    # Selector patterns to extract actual article links
     selectors:
       article_link: 'a[href*="prtlBbsId"]'
       article_title: 'a[href*="prtlBbsId"]'
       article_date: 'td:nth-child(3), span.date'
       content_area: '.board-view, .article-content, .content'
-    
-    # Quality validation rules
     quality_rules:
-      min_content_length: 50  # Reject if content < 50 chars
+      min_content_length: 50
       reject_patterns:
-        - "바로가기"  # Skip navigation
-        - "퀵메뉴"    # Skip quickmenu
-        - "메뉴"     # Skip menu text
+        - "바로가기"
+        - "퀵메뉴"
+        - "메뉴"
       accept_keywords:
         - "모집"
         - "공고"
         - "입학"
         - "입시"
         - "전형"
+
+  unn_news:
+    name: "UNN News"
+    url: "https://news.unn.net/rss/allArticle.xml"
+    enabled: false
+    scraper_class: "rss_feed_scraper"
+    scrape_interval: 1800
+    description: "UNN News RSS (disabled - not admission-focused)"
+
+  pusan_graduate_edu:
+    name: "Pusan Nat'l University - Graduate Education"
+    url: "https://his.pusan.ac.kr/bbs/gereduEng/10835/rssList.do?row=50"
+    enabled: true
+    scraper_class: "rss_feed_scraper"
+    scrape_interval: 1800

@@ -15,7 +15,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.article import Article
-from scrapers.adiga_scraper import AdigaScraper
 from notifiers.telegram_notifier import TelegramNotifier
 
 class MonitorEngine:
@@ -183,12 +182,10 @@ class MonitorEngine:
         
         department_filters = self.load_filters()
         
-        # Initialize scrapers
-        scrapers = []
-        if 'adiga' in sources_config.get('sources', {}):
-            adiga_config = sources_config['sources']['adiga']
-            if adiga_config.get('enabled', True):
-                scrapers.append(AdigaScraper(adiga_config))
+        # Initialize scrapers using factory
+        from core.scraper_factory import ScraperFactory
+        factory = ScraperFactory()
+        scrapers = factory.create_all_enabled()
         
         if not scrapers:
             self.logger.error("No scrapers configured or enabled")
