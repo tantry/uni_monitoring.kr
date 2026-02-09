@@ -33,13 +33,13 @@ sources:
         - "입시"
         - "전형"
 
-  unn_news:
-    name: "UNN News"
-    url: "https://news.unn.net/rss/allArticle.xml"
-    enabled: false
+  seoul_cyber_uni:
+    name: "Seoul Cyber University"
+    url: "https://www.iscu.ac.kr/rss.xml"
+    enabled: true
     scraper_class: "rss_feed_scraper"
     scrape_interval: 1800
-    description: "UNN News RSS (disabled - not admission-focused)"
+    description: "Seoul Cyber UNiversity RSS"
 
   pusan_graduate_edu:
     name: "Pusan Nat'l University - Graduate Education"

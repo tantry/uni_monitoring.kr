@@ -29,7 +29,7 @@ class RSSFeedScraper(BaseScraper):
                 article_data = {
                     'title': entry.get('title', 'No Title'),
                     'url': entry.get('link', ''),
-                    'content': entry.get('summary', entry.get('description', entry.get('title', ''))),  # Fallback to title if no summary
+                    'content': entry.get('summary') or entry.get('description') or entry.get('title', ''),  # Fallback chain
                     'published_date': self._parse_date(entry.get('published', '')),
                     'author': entry.get('author', ''),
                     'categories': [tag.get('term', '') for tag in entry.get('tags', [])],

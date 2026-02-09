@@ -2,7 +2,7 @@ Message to assistant:
 
 I'm a new developer onboarding to this university monitoring project. 
 reference https://github.com/tantry/uni_monitoring.kr 
-I need to add a new RSS feed from https://news.unn.net/rss/allArticle.xml. I have access, but you do not, to the project documentation at docs/. Walk me through the complete integration process using the established patterns and fix any issues we encounter. confirm you are done making initial reconnaisance then i will issue a command to show you my exact file situation 
+I need to add a new RSS feed from https://news.unn.net/rss/allArticle.xml. I have access, but you do not, to the project documentation at docs/. Walk me through the complete integration process using the established patterns and fix any issues we encounter. confirm you are done making initial exploration then i will issue a command to show you my exact file situation 
 
 (User: Start by running this block, copy results, paste into prompt)
 
@@ -35,3 +35,64 @@ Key Issues to Resolve
 - stop and allow me to choose an option.
 - user prefers execution of exploratory or implementation to working system safely, so do explain the changes to system
 - user absolutely prefers sed, cat, cat EOF commands, or nano commands where absolutely required. 
+
+
+---
+
+Test new RSS - Python
+to add:
+https://www.iscu.ac.kr/rss.xml
+test to see first with feedparser
+
+```
+python3 << 'PYTHON'
+import feedparser
+
+url = "https://www.iscu.ac.kr/rss.xml"
+feed = feedparser.parse(url)
+
+print(f"Feed title: {feed.feed.get('title', 'N/A')}")
+print(f"Feed entries: {len(feed.entries)}")
+print(f"Bozo: {feed.bozo}")
+
+if feed.bozo:
+    print(f"Bozo exception: {feed.bozo_exception}")
+
+if feed.entries:
+    print(f"\nFirst entry:")
+    print(f"  Title: {feed.entries[0].get('title', 'N/A')}")
+    print(f"  Link: {feed.entries[0].get('link', 'N/A')}")
+else:
+    print("No entries found in feed")
+PYTHON
+```
+now edit
+
+```
+nano config/sources.yaml
+```
+advised: remember that yaml disallows TABS never use tabs, only use spaces (try copy this or edit one inside the config/sources.yaml)
+
+```
+seoul_cyber_uni:
+    name: "Seoul Cyber University"
+    url: "https://www.iscu.ac.kr/rss.xml"
+    enabled: true
+    scraper_class: "rss_feed_scraper"
+    scrape_interval: 1800
+```
+
+```
+python3 core/monitor_engine.py --test 2>&1 | grep -A 15 "seoul_cyber_uni"
+```
+
+
+
+testing scraper_class
+
+
+push to telegram, first
+
+```
+rm -f state.json  
+```

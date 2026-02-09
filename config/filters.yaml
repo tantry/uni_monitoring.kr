@@ -1,6 +1,5 @@
-# Filter matching configuration
 matching:
-  min_confidence: 0.15  # Threshold: any keyword match counts
+  min_confidence: 0.10
 
 departments:
   music:
@@ -8,21 +7,53 @@ departments:
     keywords: ["음악", "music", "실용음악", "성악", "작곡", "교향곡", "오케스트라"]
     emoji: "🎵"
     priority: 1
-    
+    confidence_threshold: 0.15
+
   korean:
     name: "국어국문학과"
     keywords: ["한국어", "국어", "국어국문", "국문학", "한국언어", "한글"]
     emoji: "📚"
     priority: 2
-    
+    confidence_threshold: 0.15
+
   english:
     name: "영어영문학과"
     keywords: ["영어", "영어영문", "영문학", "영미언어", "영미문화"]
     emoji: "🔤"
     priority: 3
-    
+    confidence_threshold: 0.15
+
   liberal:
     name: "인문학부"
     keywords: ["인문", "인문학", "교양", "교양교육", "자유전공", "기초교육"]
     emoji: "📖"
     priority: 4
+    confidence_threshold: 0.15
+
+  student_affairs:
+    name: "학생생활/학사/공지"
+    keywords: ["공지사항", "소식", "안내", "공고", "알림", "학사"]
+    emoji: "👨‍🎓"
+    priority: 5
+    confidence_threshold: 0.05
+
+  accounting:
+    name: "세무회계학과"
+    keywords: ["세무", "회계", "세무회계", "재무보고", "관리회계", "세무전략", "taxation", "accounting", "tax", "financial reporting", "management accounting"]
+    emoji: "📊"
+    priority: 6
+    confidence_threshold: 0.15
+
+  finance:
+    name: "금융전공/자산관리"
+    keywords: ["금융", "보험", "자산관리", "투자", "재무전략", "리스크관리", "금융보험", "finance", "insurance", "asset management", "investment", "financial strategy", "risk management"]
+    emoji: "💰"
+    priority: 7
+    confidence_threshold: 0.15
+
+  business:
+    name: "경영학부"
+    keywords: ["경영", "기업", "기업관리", "경영전략", "기업전략", "business", "enterprise", "management", "strategy", "administration"]
+    emoji: "🏢"
+    priority: 8
+    confidence_threshold: 0.15
