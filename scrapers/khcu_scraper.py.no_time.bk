@@ -1,0 +1,473 @@
+"""
+KHCU (Kyung Hee Cyber University) Scraper Implementation - FINAL VERSION
+Scrapes academic schedule from https://khcu.ac.kr/schedule/index.do
+
+Structure:
+- Academic calendar with monthly schedule items
+- Each item has: date (MM.DD(요일)) and title
+- Requires Selenium for JavaScript rendering
+- Filters for relevant departments (Taxation, Finance, Business Admin)
+"""
+
+import logging
+import re
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+
+try:
+    from core.base_scraper import BaseScraper
+    from models.article import Article
+except ImportError:
+    # Fallback for standalone testing
+    class BaseScraper:
+        def __init__(self, config):
+            self.config = config
+            self.logger = logging.getLogger(self.__class__.__name__)
+    
+    class Article:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+
+logger = logging.getLogger(__name__)
+
+
+class KhcuScraper(BaseScraper):
+    """
+    Scraper for Kyung Hee Cyber University Academic Schedule
+    
+    URL: https://khcu.ac.kr/schedule/index.do
+    Type: Academic calendar with schedule items
+    
+    IMPROVEMENTS:
+    - Fixed Selenium 4.x compatibility
+    - Text cleaning for stray characters
+    - Comprehensive error handling
+    - Better logging
+    """
+    
+    def __init__(self, config: dict):
+        """
+        Initialize KHCU scraper
+        
+        Args:
+            config: Configuration dictionary with settings
+        """
+        super().__init__(config)
+        self.base_url = "https://khcu.ac.kr"
+        self.schedule_url = f"{self.base_url}/schedule/index.do"
+        self.source_name = "khcu"
+        self.driver = None
+        
+        # Relevant department keywords for your interests
+        self.department_keywords = {
+            'taxation_accounting': [
+                '세무', '회계', '세무회계', '세무회계학부',
+                'taxation', 'accounting', 'tax'
+            ],
+            'finance_insurance': [
+                '금융', '보험', '금융보험', '금융보험학부',
+                'finance', 'insurance', 'financial'
+            ],
+            'business_admin': [
+                '경영', '경영학', '경영학부', '경영관리',
+                'business', 'management', 'administration', 'admin'
+            ]
+        }
+        
+        # Admission-related keywords
+        self.admission_keywords = [
+            '입학', '입시', '모집', '지원', '지원서',
+            'admission', 'apply', 'application', 'enroll'
+        ]
+    
+    def _init_driver(self) -> webdriver.Chrome:
+        """
+        Initialize Selenium Chrome driver
+        
+        Returns:
+            Configured Chrome WebDriver instance
+        """
+        try:
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument(
+                "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+            )
+            
+            driver = webdriver.Chrome(options=chrome_options)
+            self.logger.info("Chrome driver initialized successfully")
+            return driver
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Chrome driver: {e}")
+            raise
+    
+    def _load_page(self) -> bool:
+        """
+        Load the KHCU schedule page using Selenium
+        
+        Returns:
+            True if page loaded successfully, False otherwise
+        """
+        try:
+            if not self.driver:
+                self.driver = self._init_driver()
+            
+            self.logger.info(f"Loading KHCU schedule page: {self.schedule_url}")
+            self.driver.get(self.schedule_url)
+            
+            # Wait for schedule content to load - using presence_of_all_elements_located
+            # which is compatible with Selenium 4.x
+            try:
+                WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_all_elements_located((By.CLASS_NAME, "scheduleList"))
+                )
+            except:
+                # Fallback: just wait and check if elements exist
+                import time
+                time.sleep(3)
+                items = self.driver.find_elements(By.CLASS_NAME, "scheduleList")
+                if not items:
+                    self.logger.warning("Schedule list elements not found, but continuing...")
+            
+            # Additional wait for JavaScript rendering
+            import time
+            time.sleep(2)
+            
+            self.logger.info("KHCU schedule page loaded successfully")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error loading KHCU page: {e}")
+            return False
+    
+    def _clean_title(self, title: str) -> str:
+        """
+        Clean title by removing stray Latin characters at the end
+        
+        Args:
+            title: Raw title text
+            
+        Returns:
+            Cleaned title
+        """
+        if not title:
+            return title
+        
+        # Remove stray Latin letters at the end (artifacts from HTML parsing)
+        # Pattern: one or more Latin letters at the end of the string
+        cleaned = re.sub(r'[a-zA-Z]+\s*$', '', title).strip()
+        
+        # Also handle common punctuation artifacts
+        cleaned = re.sub(r'[/\\]+\s*$', '', cleaned).strip()
+        
+        return cleaned
+    
+    def fetch_articles(self) -> List[Dict[str, Any]]:
+        """
+        Fetch all schedule items from KHCU page
+        
+        Returns:
+            List of dictionaries with raw article data
+        """
+        articles = []
+        
+        try:
+            # Load the page
+            if not self._load_page():
+                return articles
+            
+            # Find all schedule items
+            schedule_items = self.driver.find_elements(
+                By.CSS_SELECTOR,
+                ".scheduleList > li"
+            )
+            
+            self.logger.info(f"Found {len(schedule_items)} schedule items")
+            
+            # Extract data from each item
+            for item in schedule_items:
+                try:
+                    # Get date and title from the item
+                    date_elem = item.find_element(By.CLASS_NAME, "date")
+                    date_text = date_elem.text.strip()
+                    
+                    # Get title (second span in the div)
+                    spans = item.find_elements(By.TAG_NAME, "span")
+                    title = ""
+                    if len(spans) > 1:
+                        title = spans[1].text.strip()
+                        # Clean up any trailing Latin characters
+                        title = self._clean_title(title)
+                    
+                    if not title:
+                        self.logger.debug(f"Skipping item with empty title")
+                        continue
+                    
+                    # Create article dict
+                    article = {
+                        'title': title,
+                        'url': self.schedule_url,
+                        'content': f"{date_text}: {title}",
+                        'date_text': date_text,
+                        'source': self.source_name,
+                        'published_date': self._parse_date(date_text),
+                    }
+                    
+                    articles.append(article)
+                    self.logger.debug(f"Extracted: {date_text} - {title}")
+                    
+                except Exception as e:
+                    self.logger.error(f"Error extracting schedule item: {e}")
+                    continue
+            
+            self.logger.info(f"Extracted {len(articles)} articles from KHCU")
+            return articles
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching KHCU articles: {e}")
+            return articles
+        
+        finally:
+            # Keep driver open for reuse, cleanup happens on exit
+            pass
+    
+    def _parse_date(self, date_text: str) -> Optional[str]:
+        """
+        Parse date from KHCU format: MM.DD(요일) to YYYY-MM-DD
+        
+        Args:
+            date_text: Date string in format like "03.02(월)"
+            
+        Returns:
+            Parsed date in YYYY-MM-DD format or None if parsing fails
+        """
+        try:
+            # Extract MM.DD from date_text
+            match = re.match(r'(\d{2})\.(\d{2})', date_text)
+            if not match:
+                return None
+            
+            month = int(match.group(1))
+            day = int(match.group(2))
+            
+            # Determine year: if month not yet passed this year, use current year
+            # Otherwise, try current year first
+            current_year = datetime.now().year
+            current_month = datetime.now().month
+            current_day = datetime.now().day
+            
+            # Simple heuristic: if the month/day is before today, assume next year
+            # Otherwise, assume current year
+            if (month < current_month) or (month == current_month and day < current_day):
+                # Use current year (might be looking at past schedules)
+                year = current_year
+            else:
+                year = current_year
+            
+            # Create date object
+            date_obj = datetime(year, month, day)
+            return date_obj.strftime('%Y-%m-%d')
+            
+        except Exception as e:
+            self.logger.debug(f"Could not parse date '{date_text}': {e}")
+            return None
+    
+    def parse_article(self, raw_data: Dict[str, Any]) -> Article:
+        """
+        Parse raw schedule data into Article model
+        
+        Args:
+            raw_data: Raw article dictionary from fetch_articles()
+            
+        Returns:
+            Parsed Article object
+        """
+        try:
+            # Detect department from title and content
+            department = self.detect_department(raw_data)
+            
+            # Create Article object
+            article = Article(
+                title=raw_data.get('title', ''),
+                url=raw_data.get('url', ''),
+                content=raw_data.get('content', ''),
+                source=raw_data.get('source', self.source_name),
+                published_date=raw_data.get('published_date'),
+                department=department,
+                metadata={
+                    'fetched_at': datetime.now().isoformat(),
+                    'source_name': self.source_name,
+                    'date_text': raw_data.get('date_text'),
+                }
+            )
+            
+            return article
+            
+        except Exception as e:
+            self.logger.error(f"Error parsing article: {e}")
+            return Article(
+                title="Parse Error",
+                url=raw_data.get('url', ''),
+                content=f"Error parsing article: {str(e)}",
+                source=self.source_name,
+                department=None
+            )
+    
+    def detect_department(self, article_data: Dict[str, Any]) -> Optional[str]:
+        """
+        Detect which department this schedule item relates to
+        
+        Args:
+            article_data: Raw article data
+            
+        Returns:
+            Department name or None
+        """
+        try:
+            # Combine title and content for keyword search
+            content = f"{article_data.get('title', '')} {article_data.get('content', '')}"
+            content_lower = content.lower()
+            
+            # Check each department
+            for dept, keywords in self.department_keywords.items():
+                if any(keyword in content_lower for keyword in keywords):
+                    self.logger.debug(
+                        f"Schedule matched department '{dept}': {article_data.get('title', '')[:50]}"
+                    )
+                    return dept
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error detecting department: {e}")
+            return None
+    
+    def get_source_name(self) -> str:
+        """Return unique source identifier"""
+        return self.source_name
+    
+    def test_connection(self) -> bool:
+        """
+        Test connection to KHCU server
+        
+        Returns:
+            True if connection successful
+        """
+        try:
+            if not self._load_page():
+                return False
+            
+            # Verify we can find schedule content
+            items = self.driver.find_elements(By.CSS_SELECTOR, ".scheduleList > li")
+            success = len(items) > 0
+            
+            if success:
+                self.logger.info(f"✅ Connection successful - found {len(items)} items")
+            else:
+                self.logger.warning("Connection successful but no items found")
+            
+            return True  # Connection succeeded even if no items
+            
+        except Exception as e:
+            self.logger.error(f"Connection test failed: {e}")
+            return False
+    
+    def scrape(self) -> List[Article]:
+        """
+        Main scraping method - fetch and parse articles
+        
+        Returns:
+            List of parsed Article objects
+        """
+        try:
+            raw_articles = self.fetch_articles()
+            articles = []
+            
+            for raw in raw_articles:
+                try:
+                    article = self.parse_article(raw)
+                    if article and article.title:
+                        articles.append(article)
+                        self.logger.debug(f"Parsed: {article.title}")
+                except Exception as e:
+                    self.logger.error(f"Error parsing article: {e}")
+            
+            self.logger.info(f"Scraped {len(articles)} articles from {self.get_source_name()}")
+            return articles
+            
+        except Exception as e:
+            self.logger.error(f"Scraping failed: {e}")
+            return []
+        
+        finally:
+            # Cleanup
+            if self.driver:
+                try:
+                    self.driver.quit()
+                    self.driver = None
+                except Exception as e:
+                    self.logger.error(f"Error closing driver: {e}")
+    
+    def __del__(self):
+        """Cleanup driver on object destruction"""
+        if self.driver:
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
+
+
+# Test the scraper
+if __name__ == "__main__":
+    import sys
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    print("🧪 Testing KHCU Scraper (FINAL VERSION)")
+    print("=" * 60)
+    
+    # Create scraper with minimal config
+    config = {'test_mode': True}
+    scraper = KhcuScraper(config)
+    
+    print(f"Source name: {scraper.get_source_name()}")
+    print(f"Base URL: {scraper.base_url}")
+    print("")
+    
+    # Test connection
+    print("Testing connection...")
+    if scraper.test_connection():
+        print("✅ Connection successful")
+    else:
+        print("❌ Connection failed")
+    
+    print("")
+    
+    # Test scraping
+    print("Testing scraping...")
+    articles = scraper.scrape()
+    
+    print(f"\n✅ Found {len(articles)} schedule items:")
+    for i, article in enumerate(articles[:10], 1):
+        print(f"\n{i}. {article.title}")
+        print(f"   Date: {article.published_date}")
+        print(f"   Department: {article.department}")
+        print(f"   URL: {article.url}")
+    
+    if len(articles) > 10:
+        print(f"\n... and {len(articles) - 10} more items")
+    
+    print("\n" + "=" * 60)
+    print("✅ KHCU scraper test complete")
