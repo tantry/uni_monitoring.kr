@@ -98,46 +98,27 @@ class MonitorEngine:
         finally:
             conn.close()
     
-    def load_filters(self) -> tuple:
-        """Load department filters with confidence configuration"""
+    def load_filters(self) -> Dict[str, List[str]]:
+        """Load department filters"""
         with open('config/filters.yaml', 'r') as f:
-            filters_config = yaml.safe_load(f)
+            filters = yaml.safe_load(f)
         
-        global_min = filters_config.get('matching', {}).get('min_confidence', 0.10)
+        department_filters = {}
+        for dept, config in filters.get('departments', {}).items():
+            department_filters[dept] = config.get('keywords', [])
         
-        keywords = {}
-        configs = {}
-        for dept, config in filters_config.get('departments', {}).items():
-            keywords[dept] = config.get('keywords', [])
-            configs[dept] = {
-                'threshold': config.get('confidence_threshold', global_min),
-                'priority': config.get('priority', 99)
-            }
-        
-        return keywords, configs, global_min
+        return department_filters
     
-    def filter_article(self, article: Article, filters: Dict[str, List[str]], configs: Dict, min_conf: float) -> str:
-        """Filter article using confidence thresholds"""
+    def filter_article(self, article: Article, filters: Dict[str, List[str]]) -> str:
+        """Determine which department an article belongs to"""
         text_to_check = f"{article.title} {article.content}".lower()
         
-        matches = {}
-        for dept, keywords in filters.items():
-            keyword_matches = sum(1 for kw in keywords if kw.lower() in text_to_check)
-            if len(keywords) > 0:
-                confidence = keyword_matches / len(keywords)
-                threshold = configs.get(dept, {}).get('threshold', min_conf)
-                
-                if confidence >= threshold:
-                    matches[dept] = {
-                        'confidence': confidence,
-                        'priority': configs.get(dept, {}).get('priority', 99)
-                    }
+        for department, keywords in filters.items():
+            for keyword in keywords:
+                if keyword.lower() in text_to_check:
+                    return department
         
-        if not matches:
-            return "general"
-        
-        best = max(matches.items(), key=lambda x: (x[1]['confidence'], -x[1]['priority']))[0]
-        return best
+        return "general"
     
     def format_message(self, article: Article, department: str) -> str:
         """Format article as Telegram message with HTML links"""
@@ -148,6 +129,7 @@ class MonitorEngine:
         message = f"""🎓 <b>[새 입학 공고] {article.title}</b>
 
 📌 <b>부서/학과</b>: {department}
+📝 <b>내용</b>: {content}
 🔗 <a href="{article.url}">기사 보기</a>
 
 <b>💡 URL 확인 - 열기:</b>
@@ -198,7 +180,7 @@ class MonitorEngine:
         with open('config/sources.yaml', 'r') as f:
             sources_config = yaml.safe_load(f)
         
-        filters, configs, min_conf = self.load_filters()
+        department_filters = self.load_filters()
         
         # Initialize scrapers using factory
         from core.scraper_factory import ScraperFactory
@@ -221,7 +203,7 @@ class MonitorEngine:
         new_articles = []
         for article in all_articles:
             # Apply department filter
-            department = self.filter_article(article, filters, configs, min_conf)
+            department = self.filter_article(article, department_filters)
             article.department = department
             
             # Check for duplicates

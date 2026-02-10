@@ -32,7 +32,7 @@ departments:
 
   student_affairs:
     name: "학생생활/학사/공지"
-    keywords: ["공지사항", "소식", "안내", "공고", "알림", "학사"]
+    keywords: ["공지사항", "소식", "안내", "공고", "알림", "학사", "정시", "입학", "모집", "admission", "entrance", "enrollment", "recruitment", "rolling admission"]
     emoji: "👨‍🎓"
     priority: 5
     confidence_threshold: 0.05

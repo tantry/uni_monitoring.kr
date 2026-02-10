@@ -44,6 +44,6 @@ sources:
   pusan_graduate_edu:
     name: "Pusan Nat'l University - Graduate Education"
     url: "https://his.pusan.ac.kr/bbs/gereduEng/10835/rssList.do?row=50"
-    enabled: true
+    enabled: false
     scraper_class: "rss_feed_scraper"
     scrape_interval: 1800

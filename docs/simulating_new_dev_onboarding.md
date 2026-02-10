@@ -6,6 +6,7 @@ I need to add a new RSS feed from https://news.unn.net/rss/allArticle.xml. I hav
 
 (User: Start by running this block, copy results, paste into prompt)
 
+sqlite3 data/state.db "SELECT COUNT(*) as total, department, COUNT(DISTINCT source) as sources FROM articles GROUP BY department;"
 ```
 echo "=== TEST: New developer adding RSS feed ==="
 echo "1. They check GUIDE_TO_DOCS.md"
@@ -28,6 +29,30 @@ Key Issues to Resolve
 - user prefers execution of exploratory or implementation to working system safely, so do explain the changes to system
 - user absolutely prefers sed, cat, cat EOF commands, or nano commands where absolutely required. 
 
+# 1. Show current directory
+```
+pwd
+```
+# 2. List your project files
+```
+ls -la
+```
+# 3. Show current monitor_engine.py filter logic
+```
+cat core/monitor_engine.py | grep -A 20 "def filter_article"
+```
+# 4. Show filters.yaml content
+```
+cat config/filters.yaml
+```
+# 5. Show recent monitor run output (if available)
+```
+tail -50 logs/monitor.log  # or whatever your last run showed
+```
+# 6. Check if database has articles
+```
+sqlite3 data/state.db "SELECT COUNT(*) as total, department, COUNT(DISTINCT source) as sources FROM articles GROUP BY department;"
+```
    **NOTE for AI PROMPTS**
 (add this at end of every third subsequent prompt)
 - assist user step-by-step
@@ -96,3 +121,9 @@ push to telegram, first
 ```
 rm -f state.json  
 ```
+
+
+
+meeeee
+
+
