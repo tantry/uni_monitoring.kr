@@ -5,7 +5,7 @@ sources:
     enabled: true
     scraper_class: "adiga_scraper"
     scrape_interval: 1800
-    confidence_threshold: 0.10  # ← Engine-wide default
+    confidence_threshold: 0.10
     description: "Adiga.kr university announcements"
     announcement_paths:
       - path: "/cct/pbf/noticeList.do"
@@ -35,16 +35,16 @@ sources:
         - "전형"
 
   khcu:
-    name: ""Kyung Hee Cyber University""
+    name: "Kyung Hee Cyber University"
     url: "https://khcu.ac.kr/schedule/index.do"
     enabled: true
-    scraper_class: "KhcuScraper"
+    scraper_class: "khcu_scraper"
     scrape_interval: 1800
     date_filter_days: 120
     enable_department_filter: false
     enable_item_type_filter: true
     enable_exclude_filter: true
-    confidence_threshold: 0.10  # ← Engine-wide default
+    confidence_threshold: 0.10
 
   seoul_cyber_uni:
     name: "Seoul Cyber University"
@@ -52,8 +52,8 @@ sources:
     enabled: true
     scraper_class: "rss_feed_scraper"
     scrape_interval: 1800
-    description: "Seoul Cyber UNiversity RSS"
-    confidence_threshold: 0.10  # ← Engine-wide default
+    description: "Seoul Cyber University RSS"
+    confidence_threshold: 0.10
 
   pusan_graduate_edu:
     name: "Pusan Nat'l University - Graduate Education"
@@ -61,3 +61,4 @@ sources:
     enabled: false
     scraper_class: "rss_feed_scraper"
     scrape_interval: 1800
+    confidence_threshold: 0.10
