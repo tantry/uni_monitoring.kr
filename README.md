@@ -17,6 +17,20 @@
 
 The system is designed to be easily extended with additional university sources through configuration alone, without requiring code changes.
 
+## 📅 Weekly Deadline Alerts (Wednesdays)
+
+In addition to daily monitoring, the system sends a comprehensive weekly deadline report 
+every Wednesday containing:
+
+- **TOPIK exam schedules** - Registration dates, exam sitting dates, results announcements
+- **University admission deadlines** - Spring/Fall recruitment windows  
+- **Priority categorization** - Urgent (3 weeks), Upcoming (8 weeks), Future
+- **Korea-only tracking** - All major Korean universities and institutions
+
+This helps the target audience to plan ahead for exam registrations and application deadlines.
+
+See `deadline_alerts.py` for configuration and deadline list.
+
 ---
 
 ## ⚡ Quick Start (5 minutes)
