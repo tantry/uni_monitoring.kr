@@ -55,13 +55,11 @@ class AdigaScraper(BaseScraper):
             options.add_argument('--disable-gpu')
             options.add_argument('--window-size=1920,1080')
             options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36')
-            
-            # Use Chrome Beta
-            options.binary_location = '/usr/bin/google-chrome-beta'
+            options.add_argument('--disable-blink-features=AutomationControlled')
+            options.add_argument('--remote-debugging-port=9222')
             
             # Use ChromeDriver (beta version at /usr/bin/chromedriver)
-            service = Service('/usr/bin/chromedriver')
-            self.driver = webdriver.Chrome(service=service, options=options)
+            self.driver = webdriver.Chrome(options=options)
             self.driver.set_page_load_timeout(30)
             
             print("DEBUG: Selenium initialized successfully")

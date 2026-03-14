@@ -5,7 +5,8 @@ echo "📅 Daily Git Push - $(date)"
 echo "=========================="
 
 # Run the push script
-./push_to_github.sh
+#./push_to_github.sh
+bash
 
 # Add to crontab suggestion
 echo ""
