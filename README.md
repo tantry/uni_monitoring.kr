@@ -15,6 +15,9 @@
 3. **Seoul Cyber University (서울사이버대학)** - Educational institution announcements via RSS feed  
    URL: https://www.iscu.ac.kr/rss.xml
 
+4. **Saramin Job Feed (사람인)** - Employment opportunities in finance, accounting, and business roles  
+   URL: https://feeds.feedburner.com/live-job
+
 The system is designed to be easily extended with additional university sources through configuration alone, without requiring code changes.
 
 ## 📅 Weekly Deadline Alerts (Wednesdays)
