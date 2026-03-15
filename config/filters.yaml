@@ -1,4 +1,5 @@
 matching:
+# For filter patterns, see: docs/FILTER_TEMPLATES.md
   min_confidence: 0.10
 
 departments:
@@ -57,3 +58,10 @@ departments:
     emoji: "🏢"
     priority: 8
     confidence_threshold: 0.15
+
+  jobs:
+    name: "채용공고 - 금융/회계/서비스"
+    keywords: ["채용", "인턴", "신입", "경력", "금융", "회계", "재무", "고객", "서비스", "영어"]
+    emoji: "💼"
+    priority: 9
+    confidence_threshold: 0.05

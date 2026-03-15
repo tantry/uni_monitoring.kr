@@ -62,3 +62,12 @@ sources:
     scraper_class: "rss_feed_scraper"
     scrape_interval: 1800
     confidence_threshold: 0.10
+
+  job_saramin:
+    name: "Saramin Job Feed"
+    url: "https://feeds.feedburner.com/live-job"
+    enabled: true
+    scraper_class: "rss_feed_scraper"
+    scrape_interval: 3600
+    description: "Job postings from Saramin (사람인)"
+    confidence_threshold: 0.10

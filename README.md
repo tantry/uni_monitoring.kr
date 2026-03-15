@@ -619,3 +619,68 @@ This README now includes insights from the latest development session:
 ✅ How to add multiple URLs from same site  
 ✅ Updated configuration examples  
 ✅ Clear tiered structure (Quick Start → Config → Architecture → Troubleshooting)  
+
+4. **Saramin Job Feed (사람인)** - Employment opportunities matching your field  
+   URL: https://feeds.feedburner.com/live-job
+   Filters: Finance, Accounting, Business Administration roles
+   Updated: March 2026
+
+---
+
+## 📚 Filter Templates & Configuration Library
+
+For consistent, reusable filter patterns, see `docs/FILTER_TEMPLATES.md`.
+
+This document provides templates for:
+- **Job Postings** - Finance, accounting, service roles (0.05 threshold)
+- **Academic Programs** - University admission announcements (0.10 threshold)
+- **Student Services** - Schedules, events, campus news (0.05 threshold)
+
+### Using Filter Templates
+
+1. Review relevant template in `docs/FILTER_TEMPLATES.md`
+2. Adapt keywords for your needs
+3. Add to `config/filters.yaml` with appropriate confidence_threshold
+4. Test: `python3 core/monitor_engine.py --test`
+
+**Example**: Adding new job feed
+```yaml
+jobs_newsite:
+  name: "Jobs - New Site"
+  keywords: ["채용", "인턴", "금융", "회계"]  # From template
+  emoji: "💼"
+  priority: 9
+  confidence_threshold: 0.05  # From template guide
+```
+
+No code changes needed - configuration-driven entirely.
+
+
+---
+
+## 📊 Current System Status (March 2026)
+
+### ✅ Fully Operational
+
+- ✅ **4 Active Scrapers**: Adiga (web), KHCU (web), Seoul Cyber (RSS), Saramin (RSS job feed)
+- ✅ **71 Articles/Run**: Average detection across all sources
+- ✅ **9 Filter Categories**: Music, Korean, English, Liberal Arts, Student Affairs, Accounting, Finance, Business, Jobs
+- ✅ **Two-Layer Filtering**: Scraper-level + Engine-level with per-category thresholds
+- ✅ **Telegram Notifications**: Verified end-to-end delivery
+- ✅ **Configuration-Driven Architecture**: Add sources/filters via YAML only
+- ✅ **Filter Templates**: Reusable patterns for new sources (`docs/FILTER_TEMPLATES.md`)
+
+### 🎯 Latest Additions (This Session)
+
+- 🆕 Job feed integration (Saramin RSS)
+- 🆕 Filter templates library for consistent configuration
+- 🆕 9th department: Jobs (채용공고)
+- 🆕 Per-department confidence thresholds
+- 🆕 Improved duplicate detection system
+
+### 🔄 In Development
+
+- Multi-URL source support (same university, multiple locations)
+- Additional job boards beyond Saramin
+- Enhanced job filtering by role (Finance, Accounting, etc.)
+
