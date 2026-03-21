@@ -15,8 +15,11 @@
 3. **Seoul Cyber University (서울사이버대학)** - Educational institution announcements via RSS feed  
    URL: https://www.iscu.ac.kr/rss.xml
 
-4. **Saramin Job Feed (사람인)** - Employment opportunities in finance, accounting, and business roles  
-   URL: https://feeds.feedburner.com/live-job
+4. **Saramin Jobs (사람인)** - Comprehensive job monitoring
+   - **General Jobs**: All job postings filtered by department keywords
+   - **Biology/Pharma Jobs**: Targeted search for life sciences positions
+   - URL: https://www.saramin.co.kr
+   - Updated: March 2026
 
 The system is designed to be easily extended with additional university sources through configuration alone, without requiring code changes.
 
@@ -139,6 +142,20 @@ departments:
 
 ## 🏗️ Architecture Overview (Understanding the System)
 
+University Sources          Job Sources
+├── Adiga                   ├── Saramin (General)
+├── KHCU                    └── Saramin (Biology)
+└── Seoul Cyber
+
+              ↓
+      config/sources.yaml
+              ↓
+      config/filters.yaml
+              ↓
+      core/monitor_engine.py
+              ↓
+      Notifications to Telegram
+
 ### Two-Layer Filtering System
 
 The system implements filtering at two levels:
@@ -179,6 +196,23 @@ Threshold: 10% → 60% ≥ 10% ✅ MATCHED
 
 Result: Article matches taxation_accounting department
 ```
+
+## 💼 Job Monitoring Features
+
+The system now monitors job postings with specialized filters:
+
+### Job Sources
+- **General Job Feed**: Fetches 40+ jobs from Saramin search (all industries)
+- **Biology/Pharma Feed**: Targeted search for life sciences, pharmaceutical, and biotech jobs (60+ jobs)
+
+### Job Department Filters
+| Department | Keywords | Emoji | For |
+|------------|----------|-------|-----|
+| `jobs_bilingual` | 영어, 이중언어, 글로벌, 관광, 여행, 호텔 | 💼🌐 | English/Korean bilingual roles |
+| `jobs_biology` | 생물, 바이오, 제약, 연구, 임상, QC, QA | 🔬 | Biology/Life Sciences internships |
+| `jobs` | 채용, 인턴, 신입, 금융, 회계, 서비스 | 💼 | General job postings |
+
+All job postings are filtered through the same two-layer system used for university admissions.
 
 ---
 
@@ -509,14 +543,38 @@ All credentials are automatically excluded via `.gitignore`.
 
 ### ✅ Completed & Working
 
-- ✅ KHCU academic schedule monitoring (22 relevant items)
-- ✅ Seoul Cyber University RSS feed
-- ✅ Adiga admission portal
-- ✅ Advanced multi-layer filtering
-- ✅ Date range filtering
-- ✅ Item-type filtering (admission/exam/registration)
-- ✅ Telegram notifications
-- ✅ Configuration management
+| Component | Status | Details |
+|-----------|--------|---------|
+| **KHCU academic schedule** | ✅ | 22 relevant items with item-type filtering |
+| **Seoul Cyber University** | ✅ | RSS feed monitoring |
+| **Adiga admission portal** | ✅ | Custom scraper with popup handling |
+| **Saramin General Jobs** | ✅ NEW | 40+ jobs, filtered by departments |
+| **Saramin Biology/Pharma** | ✅ NEW | 60+ targeted life sciences jobs |
+| **Two-Layer Filtering** | ✅ | Scraper-level + Engine-level |
+| **Date range filtering** | ✅ | 120-day window for academic schedules |
+| **Item-type filtering** | ✅ | Admission/exam/registration for KHCU |
+| **Department Filters (11 total)** | ✅ | Music, Korean, English, Liberal, Student Affairs, Accounting, Finance, Business, Jobs (general), Bilingual Jobs, Biology Jobs |
+| **Telegram notifications** | ✅ | Rate limit protection (0.5s delay, 429 retry) |
+| **Configuration management** | ✅ | YAML-driven, no code changes needed |
+
+### 📈 Current Metrics
+
+| Metric | Value |
+|--------|-------|
+| Active scrapers | 5 (Adiga, KHCU, Seoul Cyber, Saramin General, Saramin Biology) |
+| Articles per run | 100+ (universities + jobs) |
+| Department filters | 11 |
+| Confidence threshold | 0.10-0.15 (configurable per department) |
+| Telegram rate limit | 0.5s delay, auto-retry on 429 |
+
+### 🎯 Monitoring Targets
+
+| Daughter | Department | Source |
+|----------|------------|--------|
+| Older (bilingual, tourism) | `jobs_bilingual` | Saramin General |
+| Younger (biology, life sciences) | `jobs_biology` | Saramin Biology |
+| General job monitoring | `jobs` | Saramin General |
+| University admissions | All academic departments | Adiga, KHCU, Seoul Cyber |
 
 ### 🔄 In Progress
 
@@ -602,9 +660,9 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Last Updated**: February 11, 2026  
+**Last Updated**: March 26, 2026  
 **Status**: ✅ Production Ready  
-**Maintainer**: tantry  
+**Maintainer**: Bushgrad, Location: Geota  
 **GitHub**: https://github.com/tantry/uni_monitoring.kr  
 
 ---
@@ -622,11 +680,6 @@ This README now includes insights from the latest development session:
 ✅ How to add multiple URLs from same site  
 ✅ Updated configuration examples  
 ✅ Clear tiered structure (Quick Start → Config → Architecture → Troubleshooting)  
-
-4. **Saramin Job Feed (사람인)** - Employment opportunities matching your field  
-   URL: https://feeds.feedburner.com/live-job
-   Filters: Finance, Accounting, Business Administration roles
-   Updated: March 2026
 
 ---
 
@@ -665,25 +718,28 @@ No code changes needed - configuration-driven entirely.
 
 ### ✅ Fully Operational
 
-- ✅ **4 Active Scrapers**: Adiga (web), KHCU (web), Seoul Cyber (RSS), Saramin (RSS job feed)
-- ✅ **71 Articles/Run**: Average detection across all sources
-- ✅ **9 Filter Categories**: Music, Korean, English, Liberal Arts, Student Affairs, Accounting, Finance, Business, Jobs
+- ✅ **5 Active Scrapers**: Adiga (web), KHCU (web), Seoul Cyber (RSS), Saramin General (search), Saramin Biology (search)
+- ✅ **100+ Articles/Run**: Average detection across all sources (universities + jobs)
+- ✅ **11 Filter Categories**: Music, Korean, English, Liberal Arts, Student Affairs, Accounting, Finance, Business, Jobs (general), Bilingual Jobs, Biology Jobs
 - ✅ **Two-Layer Filtering**: Scraper-level + Engine-level with per-category thresholds
-- ✅ **Telegram Notifications**: Verified end-to-end delivery
+- ✅ **Telegram Notifications**: Rate limit protected, verified end-to-end delivery
 - ✅ **Configuration-Driven Architecture**: Add sources/filters via YAML only
 - ✅ **Filter Templates**: Reusable patterns for new sources (`docs/FILTER_TEMPLATES.md`)
 
-### 🎯 Latest Additions (This Session)
+### 🎯 Latest Additions (March 2026)
 
-- 🆕 Job feed integration (Saramin RSS)
-- 🆕 Filter templates library for consistent configuration
-- 🆕 9th department: Jobs (채용공고)
-- 🆕 Per-department confidence thresholds
-- 🆕 Improved duplicate detection system
+- 🆕 **Custom Saramin scraper** - Replaced RSS feed with search-based scraping (40+ jobs)
+- 🆕 **Biology/Pharma job source** - Targeted search for life sciences positions (60+ jobs)
+- 🆕 **Bilingual jobs department** - English/Korean, tourism, hospitality roles
+- 🆕 **Biology jobs department** - Pharmaceuticals, research, QC/QA, biotech
+- 🆕 **Telegram rate limit protection** - 0.5s delay, automatic 429 retry handling
+- 🆕 **11 filter categories** - Expanded from 9 to include bilingual and biology jobs
+- ✅ **Filter templates library** - Reusable patterns for new sources (`docs/FILTER_TEMPLATES.md`)
 
 ### 🔄 In Development
 
 - Multi-URL source support (same university, multiple locations)
-- Additional job boards beyond Saramin
-- Enhanced job filtering by role (Finance, Accounting, etc.)
+- Additional job boards (JobKorea, Incruit)
+- Intern-only filtering for biology jobs
+- Degree requirement detection (filter out roles requiring degrees)
 
