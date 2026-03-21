@@ -65,3 +65,26 @@ departments:
     emoji: "💼"
     priority: 9
     confidence_threshold: 0.05
+
+  jobs_bilingual:
+    name: "Bilingual Jobs (English/Korean)"
+    keywords: ["영어", "이중언어", "외국어", "글로벌", "국제", "영문", "관광", "여행", "호텔", "인턴", "신입", "무경력", "english", "bilingual", "global", "international", "tourism", "travel", "hotel", "intern"]
+    emoji: "💼🌐"
+    priority: 10
+    confidence_threshold: 0.10
+
+  jobs_biology:
+    name: "Biology/Life Sciences Jobs & Intern"
+    keywords: [
+      "생물", "생명과학", "바이오", "제약", "임상", "연구", "실험", 
+      "생명공학", "분자생물학", "세포", "미생물", "유전", "생화학",
+      "의과학", "의생명", "바이오의약", "바이오산업", "바이오벤처",
+      "의료기기", "진단", "분석", "품질관리", "QC", "QA",
+      "임상시험", "CRA", "CTA", "임상모니터", 
+      "bio", "biology", "life science", "pharmaceutical", "clinical", 
+      "research", "lab", "biotech", "biotechnology", "molecular",
+      "인턴", "신입", "무경력", "초보", "경력무관"
+    ]
+    emoji: "🔬"
+    priority: 11
+    confidence_threshold: 0.10

@@ -64,10 +64,21 @@ sources:
     confidence_threshold: 0.10
 
   job_saramin:
-    name: "Saramin Job Feed"
-    url: "https://feeds.feedburner.com/live-job"
+    name: "Saramin Jobs"
     enabled: true
-    scraper_class: "rss_feed_scraper"
+    scraper_class: "saramin_scraper"
     scrape_interval: 3600
-    description: "Job postings from Saramin (사람인)"
+    description: "All jobs from Saramin (filtered by department filters)"
+    search_keyword: ""
+    max_pages: 2
+    confidence_threshold: 0.10
+
+  job_saramin_biology:
+    name: "Saramin - Biology/Pharma Jobs"
+    enabled: true
+    scraper_class: "saramin_scraper"
+    scrape_interval: 3600
+    description: "Biology, life sciences, pharmaceutical jobs"
+    search_keyword: "생물 바이오 제약"
+    max_pages: 2
     confidence_threshold: 0.10
