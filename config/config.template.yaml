@@ -1,0 +1,21 @@
+# config/config.template.yaml
+# Copy this to config.yaml and fill in your values
+# config.yaml is gitignored for security
+
+telegram:
+  bot_token: "YOUR_BOT_TOKEN_HERE"
+  group_id: "YOUR_GROUP_ID_HERE"  # Now using group_id instead of chat_id
+  topics:
+    music: 0  # Replace with actual thread IDs from Telegram
+    korean: 0
+    english: 0
+    finance: 0
+    biology: 0
+    jobs_general: 0
+
+database:
+  path: "data/state.db"
+
+logging:
+  level: "INFO"
+  file: "logs/monitor.log"
