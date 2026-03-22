@@ -18,3 +18,4 @@ secrets/
 state.json
 __pycache__/
 *.pyc
+config/config.yaml
