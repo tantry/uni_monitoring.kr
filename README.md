@@ -656,7 +656,7 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Last Updated**: March 26, 2026  
+**Last Updated**: March 25, 2026  
 **Status**: ✅ Production Ready  
 **Maintainer**: Bushgrad, Location: Geota  
 **GitHub**: https://github.com/tantry/uni_monitoring.kr  
@@ -711,6 +711,58 @@ No code changes needed - configuration-driven entirely.
 ---
 
 ## 📊 Current System Status (March 2026)
+
+## 📢 Telegram Topic-Based Notifications
+
+The system now uses a **Telegram group with topics** instead of a single channel. Users can mute topics they're not interested in.
+
+| Topic | Thread ID | Content |
+|-------|-----------|---------|
+| Education & Training | 4 | University admissions, academic announcements |
+| Finance | 5 | Finance, accounting, business, general jobs, bilingual jobs |
+| Biology | 6 | Biology, pharma, biotech jobs |
+
+### Department to Topic Mapping
+
+| Department | Topic |
+|------------|-------|
+| jobs, jobs_bilingual, accounting, finance, business | Finance |
+| jobs_biology | Biology |
+| student_affairs, music, korean, english, liberal | Education & Training |
+
+### How It Works
+
+- Articles need **at least 2 keyword matches** to be classified
+- Unmatched articles are discarded (not sent)
+- When an article matches multiple departments, the one with lowest priority number wins
+
+### Priority Hierarchy
+
+| Priority | Department |
+|----------|------------|
+| 5 | student_affairs |
+| 8 | jobs_biology |
+| 9 | jobs |
+| 10 | jobs_bilingual |
+| 11 | accounting |
+| 12 | finance |
+| 13 | business |
+| 21 | music |
+| 22 | korean |
+| 23 | english |
+| 24 | liberal |
+
+### Recent Updates (March 2026)
+
+- Migrated from channel to group with topics
+- Changed filter logic from percentage threshold to minimum 2 keyword matches
+- Added 50+ biology keywords (오믹스, 오가노이드, 항체, 단백질, 비임상, 의약품, RA, PV, PMS, CRO, etc.)
+- Added 20+ admission keywords (모의고사, 수능, 대입, 입시, 장학금, etc.)
+- Removed generic "모집" from student_affairs to prevent job misclassification
+- Fixed swapped topic IDs (admissions:4, finance:5, biology:6)
+- Added config.yaml to .gitignore for security
+
+For detailed setup instructions, see **[docs/TOPIC_SETUP_GUIDE.md](docs/TOPIC_SETUP_GUIDE.md)**.
 
 ### ✅ Fully Operational
 
