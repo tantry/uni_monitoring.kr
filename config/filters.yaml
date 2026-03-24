@@ -2,76 +2,82 @@ matching:
 # For filter patterns, see: docs/FILTER_TEMPLATES.md
   min_confidence: 0.10
 
+target_profile:
+  keywords: [
+    "인턴", "인턴십", "신입", "무경력", "초보", "경력무관",
+    "학생", "대학생", "재학생", "졸업예정", "졸업예정자",
+    "intern", "internship", "entry level", "junior", "no experience",
+    "student", "undergraduate", "final year", "recent graduate"
+  ]
+  emoji: "🎯"
+
 departments:
   music:
     name: "음악학과"
     keywords: ["음악", "music", "실용음악", "성악", "작곡", "교향곡", "오케스트라"]
     emoji: "🎵"
-    priority: 1
-    confidence_threshold: 0.15
+    priority: 22
 
   korean:
     name: "국어국문학과"
     keywords: ["한국어", "국어", "국어국문", "국문학", "한국언어", "한글"]
     emoji: "📚"
-    priority: 2
-    confidence_threshold: 0.15
+    priority: 22
 
   english:
     name: "영어영문학과"
     keywords: ["영어", "영어영문", "영문학", "영미언어", "영미문화"]
     emoji: "🔤"
-    priority: 3
-    confidence_threshold: 0.15
+    priority: 23
 
   liberal:
     name: "인문학부"
     keywords: ["인문", "인문학", "교양", "교양교육", "자유전공", "기초교육"]
     emoji: "📖"
-    priority: 4
-    confidence_threshold: 0.15
+    priority: 24
 
   student_affairs:
     name: "학생생활/학사/공지"
-    keywords: ["공지사항", "소식", "안내", "공고", "알림", "학사", "정시", "입학", "모집", "admission", "entrance", "enrollment", "recruitment", "rolling admission"]
+    keywords: [
+      "공지사항", "소식", "안내", "공고", "알림", "학사", "정시", "입학",
+      "admission", "entrance", "enrollment", "recruitment", "rolling admission",
+      "모의고사", "수능", "대입", "입시", "학평", "출제범위", "시간표",
+      "의대", "정원", "지역의사제", "학생부", "전형",
+      "고3", "수험생", "대학", "학과", "전공", "강의", "수업",
+      "학기", "등록", "휴학", "복학", "졸업", "장학금"
+    ]
     emoji: "👨‍🎓"
     priority: 5
-    confidence_threshold: 0.05
 
   accounting:
     name: "세무회계학과"
     keywords: ["세무", "회계", "세무회계", "재무보고", "관리회계", "세무전략", "taxation", "accounting", "tax", "financial reporting", "management accounting"]
     emoji: "📊"
-    priority: 6
-    confidence_threshold: 0.15
+    priority: 11
 
   finance:
     name: "금융전공/자산관리"
     keywords: ["금융", "보험", "자산관리", "투자", "재무전략", "리스크관리", "금융보험", "finance", "insurance", "asset management", "investment", "financial strategy", "risk management"]
     emoji: "💰"
-    priority: 7
-    confidence_threshold: 0.15
+    priority: 12
 
   business:
     name: "경영학부"
     keywords: ["경영", "기업", "기업관리", "경영전략", "기업전략", "business", "enterprise", "management", "strategy", "administration"]
     emoji: "🏢"
-    priority: 8
-    confidence_threshold: 0.15
+    priority: 13
 
   jobs:
     name: "채용공고 - 금융/회계/서비스"
-    keywords: ["채용", "인턴", "신입", "경력", "금융", "회계", "재무", "고객", "서비스", "영어"]
+    keywords: ["채용", "인턴", "신입", "경력", "금융", "회계", "재무", "고객", "서비스", "영어", "품질관리", "식품", "사업개발", "BD", "담당자"]
     emoji: "💼"
     priority: 9
-    confidence_threshold: 0.05
 
   jobs_bilingual:
     name: "Bilingual Jobs (English/Korean)"
     keywords: ["영어", "이중언어", "외국어", "글로벌", "국제", "영문", "관광", "여행", "호텔", "인턴", "신입", "무경력", "english", "bilingual", "global", "international", "tourism", "travel", "hotel", "intern"]
     emoji: "💼🌐"
     priority: 10
-    confidence_threshold: 0.10
 
   jobs_biology:
     name: "Biology/Life Sciences Jobs & Intern"
@@ -83,8 +89,15 @@ departments:
       "임상시험", "CRA", "CTA", "임상모니터", 
       "bio", "biology", "life science", "pharmaceutical", "clinical", 
       "research", "lab", "biotech", "biotechnology", "molecular",
-      "인턴", "신입", "무경력", "초보", "경력무관"
+      "인턴", "신입", "무경력", "초보", "경력무관",
+      "오믹스", "오가노이드", "항체", "단백질", "비임상",
+      "의약품", "RA", "PV", "PMS", "CRO",
+      "neuroscience", "in vitro", "neuro", "개발팀장", "신약개발", 
+      "R&D", "SCM", "연구원", "AI", "생산설비", "제조", "생산",
+      "프로젝트", "리더", "개발", "임원", "제제", "분석", "연구소",
+      "생체재료", "연구기획", "바이오소재", "히알루로니다제",
+      "제약바이오", "제약사", "바이오제약", "알테오젠", "바이오장비", "기술영업",
+      "bioimage", "scientist", "연구간호사", "헬스케어", "바이오헬스케어"
     ]
     emoji: "🔬"
-    priority: 11
-    confidence_threshold: 0.10
+    priority: 8

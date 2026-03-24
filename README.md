@@ -2,7 +2,7 @@
 
 ## Overview
 
-**uni_monitoring.kr** is an automated university admission monitoring system that tracks announcements and schedules from Korean universities. The system continuously monitors multiple sources, filters announcements by relevance, and sends notifications via Telegram to keep you informed about important admission-related information.
+**uni_monitoring.kr** is an automated university admission and related job monitoring system that tracks announcements and schedules from Korean universities. The system monitors multiple sources, filters announcements by relevance, and sends notifications via Telegram to keep you informed about important admission-related information.
 
 ### Primary Monitoring Sources
 
@@ -315,45 +315,41 @@ python3 -c "import yaml; yaml.safe_load(open('config/sources.yaml'))"
 Should output nothing (success) or show parse errors
 
 ---
-
 ## 📋 Project Structure
-
-```
 uni_monitoring.kr/
-├── config/                    # Configuration management
-│   ├── sources.yaml          # Source definitions (EDIT THIS)
-│   ├── filters.yaml          # Department filters (EDIT THIS)
-│   └── config.yaml           # Telegram config (EDIT THIS)
-├── core/                      # Core business logic
-│   ├── base_scraper.py       # Abstract base class
-│   ├── monitor_engine.py     # Main monitoring orchestrator
-│   ├── scraper_factory.py    # Dynamic scraper loading
-│   ├── filter_engine.py      # Advanced filtering
-│   └── state_manager.py      # Duplicate detection
-├── scrapers/                  # Scraper implementations
-│   ├── khcu_scraper.py       # KHCU academic schedule
-│   ├── adiga_scraper.py      # Adiga admission portal
-│   ├── rss_feed_scraper.py   # RSS feed parsing
-│   └── scraper_template.py   # Template for new scrapers
-├── models/                    # Data models
-│   └── article.py            # Article data structure
-├── notifiers/                 # Notification handlers
-│   └── telegram_notifier.py   # Telegram integration
-├── filters/                   # Filter implementations
-│   └── department_filter.py   # Department keyword matching
-├── data/                      # Data storage
-│   └── state.db              # SQLite database (auto-created)
-├── logs/                      # Log files
-│   └── monitor.log           # Application logs
-├── tests/                     # Test suite
-├── utils/                     # Utility functions
-├── scripts/                   # Utility scripts
-├── multi_monitor.py          # Legacy monitoring script
-├── check_now.sh              # Run monitoring once
-├── push_to_github_safe.sh    # Safe GitHub push
-└── README.md                 # This file
-```
-
+├── config/ # Configuration management
+│ ├── sources.yaml # Source definitions (EDIT THIS)
+│ ├── filters.yaml # Department filters (EDIT THIS)
+│ └── config.yaml # Telegram config (EDIT THIS)
+├── core/ # Core business logic
+│ ├── base_scraper.py # Abstract base class
+│ ├── monitor_engine.py # Main monitoring orchestrator
+│ ├── scraper_factory.py # Dynamic scraper loading
+│ ├── filter_engine.py # Advanced filtering
+│ └── state_manager.py # Duplicate detection
+├── scrapers/ # Scraper implementations
+│ ├── khcu_scraper.py # KHCU academic schedule
+│ ├── adiga_scraper.py # Adiga admission portal
+│ ├── rss_feed_scraper.py # RSS feed parsing
+│ ├── saramin_scraper.py # Saramin job search (NEW)
+│ └── scraper_template.py # Template for new scrapers
+├── models/ # Data models
+│ └── article.py # Article data structure
+├── notifiers/ # Notification handlers
+│ └── telegram_notifier.py # Telegram integration (rate limit protected)
+├── filters/ # Filter implementations
+│ └── department_filter.py # Department keyword matching
+├── data/ # Data storage
+│ └── state.db # SQLite database (auto-created)
+├── logs/ # Log files
+│ └── monitor.log # Application logs
+├── tests/ # Test suite
+├── utils/ # Utility functions
+├── scripts/ # Utility scripts
+├── multi_monitor.py.deprecated # Legacy script (deprecated)
+├── check_now.sh # Run monitoring once
+├── push_to_github_safe.sh # Safe GitHub push
+└── README.md # This file
 ---
 
 ## 🚀 How to Add a New Source
