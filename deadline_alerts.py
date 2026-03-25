@@ -1,12 +1,22 @@
-from config import BOT_TOKEN, CHANNEL_ID
 """
 UNIVERSITY DEADLINE TRACKER - ONE-SHOT
-Runs on Wednesdays, sends weekly deadline report
+Runs on Wednesdays, sends weekly deadline report to Education & Training topic
 """
+import yaml
 import requests
 from datetime import datetime, timedelta
-import time
+import sys
+import os
 
+# Load config
+with open('config/config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+BOT_TOKEN = config['telegram']['bot_token']
+GROUP_ID = config['telegram']['group_id']
+
+# Get topic ID for Education & Training (admissions)
+TOPIC_ID = config['telegram']['topics'].get('admissions', None)
 
 DEADLINES = [
     ["Spring 2026 추가모집", "2026-02-10", "추가모집 공고 시작", 1, "추가모집"],
@@ -28,9 +38,9 @@ def calculate_days_remaining(target_date_str):
         return None
 
 def categorize_deadlines():
-    top_priority = []      # 0-21 days (3 weeks)
-    medium_priority = []   # 22-56 days (4-8 weeks)
-    future_deadlines = []  # 57+ days
+    top_priority = []
+    medium_priority = []
+    future_deadlines = []
     
     for name, date_str, desc, base_priority, category in DEADLINES:
         days_left = calculate_days_remaining(date_str)
@@ -59,16 +69,20 @@ def categorize_deadlines():
 def send_deadline_alert(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     data = {
-        'chat_id': CHANNEL_ID,
+        'chat_id': GROUP_ID,
         'text': message,
         'parse_mode': 'HTML',
         'disable_web_page_preview': True
     }
     
+    if TOPIC_ID:
+        data['message_thread_id'] = TOPIC_ID
+    
     try:
         response = requests.post(url, json=data, timeout=10)
         return response.status_code == 200
-    except:
+    except Exception as e:
+        print(f"Error sending: {e}")
         return False
 
 def generate_weekly_report():
@@ -78,66 +92,82 @@ def generate_weekly_report():
     print(f"DEADLINE CHECK - {today.strftime('%Y-%m-%d %H:%M')}")
     print(f"{'='*60}")
     
-    top_priority, medium_priority, future = categorize_deadlines()
+    top, medium, future = categorize_deadlines()
     
-    message = f"📅 <b>대학 입시 마감일 알림</b> - {today.strftime('%Y년 %m월 %d일')}\n\n"
+    urgent_count = len(top)
+    upcoming_count = len(medium)
     
-    if top_priority:
-        message += "🔴 <b>긴급: 3주 이내 마감</b>\n"
-        for item in sorted(top_priority, key=lambda x: x['days']):
-            emoji = "⚠️" if item['days'] <= 7 else "⏰"
-            message += f"{emoji} <b>{item['name']}</b>: {item['date']} (D-{item['days']})\n"
-            message += f"   → {item['desc']}\n"
-        message += "\n"
+    print(f"📊 Found: {urgent_count} urgent, {upcoming_count} upcoming deadlines")
     
-    if medium_priority:
-        message += "🟡 <b>예정: 8주 이내 마감</b>\n"
-        for item in sorted(medium_priority[:5], key=lambda x: x['days']):
-            message += f"• {item['name']}: {item['date']} (D-{item['days']})\n"
-        message += "\n"
-    
-    message += "🎯 <b>관심 대학 모니터링 중:</b>\n"
-    message += "• 홍익대학교, 한양대학교, 강원대학교, 경상국립대학교\n"
-    message += "• 전북대학교, 충남대학교 외 6개 국립대\n\n"
-    
-    if not top_priority and not medium_priority:
-        message += "✅ 이번 주에 긴급 마감일이 없습니다.\n"
-        next_deadline = min(future, key=lambda x: x['days']) if future else None
-        if next_deadline:
-            message += f"다음 주요 마감일: {next_deadline['name']} ({next_deadline['date']}, D-{next_deadline['days']})\n\n"
-    
-    total_upcoming = len(top_priority) + len(medium_priority)
-    message += f"<i>📊 요약: 긴급 {len(top_priority)}건, 예정 {len(medium_priority)}건</i>\n\n"
-    
-    next_wednesday = today + timedelta(days=(2 - today.weekday()) % 7)
-    message += f"---\n다음 알림: {next_wednesday.strftime('%m월 %d일')} 수요일"
-    
-    print(f"📊 Found: {len(top_priority)} urgent, {len(medium_priority)} upcoming deadlines")
-    
-    if send_deadline_alert(message):
-        print("✅ Weekly report sent to Telegram")
-        return True
-    else:
-        print("✗ Failed to send report")
+    if urgent_count == 0 and upcoming_count == 0:
+        print("No deadlines to report")
         return False
+    
+    today_str = today.strftime('%Y년 %m월 %d일')
+    
+    message = f"""📅 <b>주간 대입 일정</b> ({today_str} 수요일)
+
+⚠️ <b>긴급 일정 (3주 이내)</b>
+"""
+    if top:
+        for d in sorted(top, key=lambda x: x['days']):
+            message += f"• {d['name']}: <b>{abs(d['days'])}일 후</b> ({d['date']})\n"
+    else:
+        message += "• 없음\n"
+    
+    message += f"""
+📌 <b>예정 일정 (4-8주 이내)</b>
+"""
+    if medium:
+        for d in sorted(medium, key=lambda x: x['days']):
+            message += f"• {d['name']}: {d['days']}일 후 ({d['date']})\n"
+    else:
+        message += "• 없음\n"
+    
+    message += """
+🔗 자세한 정보는 uni_monitoring.kr 참고
+
+#대입일정 #마감임박"""
+    
+    return send_deadline_alert(message)
+
+def test_mode():
+    today = datetime.now()
+    print(f"\n{'='*60}")
+    print(f"TEST MODE - {today.strftime('%Y-%m-%d %H:%M')}")
+    print(f"{'='*60}")
+    
+    top, medium, future = categorize_deadlines()
+    
+    urgent_count = len(top)
+    upcoming_count = len(medium)
+    
+    print(f"📊 Found: {urgent_count} urgent, {upcoming_count} upcoming deadlines")
+    
+    if urgent_count == 0 and upcoming_count == 0:
+        print("No deadlines to report")
+        return
+    
+    print("\n📅 Would send:\n")
+    
+    today_str = today.strftime('%Y년 %m월 %d일')
+    
+    print(f"📅 <b>주간 대입 일정</b> ({today_str} 수요일)")
+    print("\n⚠️ <b>긴급 일정 (3주 이내)</b>")
+    for d in sorted(top, key=lambda x: x['days']):
+        print(f"• {d['name']}: {abs(d['days'])}일 후 ({d['date']})")
+    
+    print("\n📌 <b>예정 일정 (4-8주 이내)</b>")
+    for d in sorted(medium, key=lambda x: x['days']):
+        print(f"• {d['name']}: {d['days']}일 후 ({d['date']})")
+    
+    print("\n🔗 #대입일정 #마감임박")
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
-    print("📅 UNIVERSITY DEADLINE TRACKER")
-    print("="*60)
-    
-    today = datetime.now()
-    day_name = ["월", "화", "수", "목", "금", "토", "일"][today.weekday()]
-    
-    if today.weekday() == 2:  # Wednesday
-        print(f"✅ Today is {day_name}요일 (Wednesday)")
-        print("Running deadline check...")
-        print("="*60)
-        success = generate_weekly_report()
+    if len(sys.argv) > 1 and sys.argv[1] == '--test':
+        test_mode()
     else:
-        print(f"⏸️  Today is {day_name}요일")
-        print("Deadline check runs on Wednesdays only")
-        print(f"Next check: 다음 수요일")
-    
-    print(f"\n✅ Complete at {datetime.now().strftime('%H:%M:%S')}")
-    print("="*60)
+        if generate_weekly_report():
+            print("✅ Report sent to Education & Training topic")
+        else:
+            print("✗ Failed to send report")
